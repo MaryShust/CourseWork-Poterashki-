@@ -1,0 +1,27 @@
+name: Compile Typst Document
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Typst
+      uses: typst/setup-typst@v2
+      with:
+        version: latest
+    
+    - name: Compile document
+      run: typst compile report.typ report.pdf
+    
+    - name: Upload PDF artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: report-pdf
+        path: report.pdf
+        retention-days: 30
