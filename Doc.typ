@@ -208,7 +208,7 @@
 
   == Предположительная архитектура
 
-  #image("architecture.png", width: 100%)
+  #image("photo_2025-09-13_15-04-44.jpg", width: 100%)
 
   #v(1cm)
 
