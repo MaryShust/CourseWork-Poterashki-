@@ -33,5 +33,5 @@
 | hash | contact.userId | Поиск всех способов контакта для пользователя c id = ... - будет наиболее частой операцией |
 | hash | photo.entity | Выборка всех картинок для сущности - наиболее частая операция |
 | hash | place.entity | Поиск места для сущности - целевая операция |
-| hash | lost.id | По сути индексом для lost будет elasticSearch |
-| hash | found.id | По сути индексом для found будет elasticSearch |
+| hash | lost.id | По сути индексом для lost будет elasticSearch.  Поэтому поиск в таблице будет только по id |
+| hash | found.id | По сути индексом для found будет elasticSearch. Поэтому поиск в таблице будет только по id |
