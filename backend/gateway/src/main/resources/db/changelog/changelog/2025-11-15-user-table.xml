@@ -1,0 +1,24 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.2.xsd">
+
+    <changeSet id="user-table" author="m.s.taranenko">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE user
+            (
+                id       UUID PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                username VARCHAR(50) NOT NULL,
+                data     JSONB DEFAULT NULL
+            );
+            CREATE INDEX user_id_idx ON user(id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
