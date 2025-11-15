@@ -40,9 +40,12 @@ subprojects {
         // Spring Boot starters
         implementation("org.springframework.boot:spring-boot-starter")
         implementation("org.springframework.boot:spring-boot-starter-web")
-        implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
         implementation("org.springframework.boot:spring-boot-starter-validation")
         implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+        //Database
+        implementation("org.liquibase:liquibase-core")
+        implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
 
         // Kotlin
         implementation("org.jetbrains.kotlin:kotlin-reflect")

@@ -4,12 +4,12 @@ extra["springCloudVersion"] = "2025.0.0"
 docker {
     dockerfile.set("docker/Dockerfile")
 }
-dockerCompose {
-
-}
 
 dependencies {
-    implementation("org.springframework.cloud:spring-cloud-starter-gateway-server-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    implementation("org.springframework.cloud:spring-cloud-starter-gateway")
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
 dependencyManagement {
