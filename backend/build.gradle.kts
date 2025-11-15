@@ -12,7 +12,7 @@ plugins {
 }
 
 allprojects {
-    group = "com.maxim"
+    group = "com.maxim.poteryashki"
     version = "1.0"
 
     repositories {
@@ -26,42 +26,117 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.plugin.spring")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "com.maxim.docker-plugin")
+    apply(plugin = "com.maxim.docker-compose-plugin")
+
+    // Общая конфигурация Java для всех подпроектов
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    }
 
     // Конфигурация зависимостей через afterEvaluate
-    afterEvaluate {
-        dependencies {
-            // Spring Boot starters
-            implementation("org.springframework.boot:spring-boot-starter")
-            implementation("org.springframework.boot:spring-boot-starter-web")
-            implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-            implementation("org.springframework.boot:spring-boot-starter-validation")
-            implementation("org.springframework.boot:spring-boot-starter-actuator")
+    dependencies {
+        // Spring Boot starters
+        implementation("org.springframework.boot:spring-boot-starter")
+        implementation("org.springframework.boot:spring-boot-starter-web")
+        implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+        implementation("org.springframework.boot:spring-boot-starter-validation")
+        implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-            // Kotlin
-            implementation("org.jetbrains.kotlin:kotlin-reflect")
-            implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+        // Kotlin
+        implementation("org.jetbrains.kotlin:kotlin-reflect")
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-            // Тестирование
-            testImplementation("org.springframework.boot:spring-boot-starter-test")
-            testImplementation("org.springframework.boot:spring-boot-testcontainers")
-            testImplementation("org.testcontainers:junit-jupiter")
+        // Тестирование
+        testImplementation("org.springframework.boot:spring-boot-testcontainers")
+        testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
+
+    kotlin {
+        jvmToolchain(21)
+        compilerOptions {
+            freeCompilerArgs.addAll("-Xjsr305=strict")
         }
+    }
 
-        tasks.withType<Test> {
-            useJUnitPlatform()
-        }
+    // Spring Boot конфигурация
+    tasks.withType<BootJar> {
+        enabled = true
+    }
 
-        kotlin {
-            jvmToolchain(21)
-        }
+    tasks.withType<BootRun> {
+        systemProperties(System.getProperties().mapKeys { it.key.toString() })
+    }
+}
 
-        // Spring Boot конфигурация
-        tasks.withType<BootJar> {
-            enabled = true
-        }
+allprojects {
+    group = "com.maxim.poteryashki"
+    version = "1.0"
 
-        tasks.withType<BootRun> {
-            systemProperties(System.getProperties().mapKeys { it.key.toString() })
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    // Применяем Spring Boot и Kotlin плагины ко всем подпроектам
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+    apply(plugin = "org.springframework.boot")
+    apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "com.maxim.docker-plugin")
+    apply(plugin = "com.maxim.docker-compose-plugin")
+
+    // Общая конфигурация Java для всех подпроектов
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
         }
+    }
+
+    // Конфигурация зависимостей через afterEvaluate
+    dependencies {
+        // Spring Boot starters
+        implementation("org.springframework.boot:spring-boot-starter")
+        implementation("org.springframework.boot:spring-boot-starter-web")
+        implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+        implementation("org.springframework.boot:spring-boot-starter-validation")
+        implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+        // Kotlin
+        implementation("org.jetbrains.kotlin:kotlin-reflect")
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+
+        // Тестирование
+        testImplementation("org.springframework.boot:spring-boot-testcontainers")
+        testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
+
+    kotlin {
+        jvmToolchain(21)
+        compilerOptions {
+            freeCompilerArgs.addAll("-Xjsr305=strict")
+        }
+    }
+
+    // Spring Boot конфигурация
+    tasks.withType<BootJar> {
+        enabled = true
+    }
+
+    tasks.withType<BootRun> {
+        systemProperties(System.getProperties().mapKeys { it.key.toString() })
     }
 }
