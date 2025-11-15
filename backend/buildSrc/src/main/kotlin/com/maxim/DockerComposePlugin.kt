@@ -10,14 +10,12 @@ open class DockerComposePlugin : Plugin<Project> {
     override fun apply(target: Project) {
         val extension = target.extensions.create("dockerCompose", DockerComposeExtension::class.java,
             target)
-
-        val tasks = target.tasks
-
+        
         target.afterEvaluate {
-            tasks.register("dockerUp", DockerUpTask::class.java) {
+            target.tasks.register("dockerUp", DockerUpTask::class.java) {
                 composeFilePath.set(extension.composeFile)
             }
-            tasks.register("dockerDown", DockerDownTask::class.java) {
+            target.tasks.register("dockerDown", DockerDownTask::class.java) {
                 composeFilePath.set(extension.composeFile)
             }
         }
