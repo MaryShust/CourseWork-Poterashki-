@@ -20,7 +20,7 @@ abstract class DockerImageBuildTask : DefaultTask() {
 
     val imageTag: Property<String> = project.objects
         .property(String::class.java)
-        .convention(project.version.toString())
+        .convention("latest")
 
     val dockerfilePath: Property<String> = project.objects
         .property(String::class.java)

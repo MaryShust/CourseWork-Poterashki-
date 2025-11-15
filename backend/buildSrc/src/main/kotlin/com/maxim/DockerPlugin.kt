@@ -19,6 +19,14 @@ open class DockerPlugin : Plugin<Project> {
                 dockerBuildContext.set(extension.dockerBuildContext)
                 dependsOn(tasks.getByName("jar"))
             }
+
+            val removeImageTask = tasks.register("removeImage", DockerImageRemoveTask::class.java) {
+                imageName.set(extension.imageName)
+                imageTag.set(extension.tag)
+                dependsOn(tasks.getByName("jar"))
+            }
+
+            tasks.getByName("clean").finalizedBy(removeImageTask)
         }
 
     }
