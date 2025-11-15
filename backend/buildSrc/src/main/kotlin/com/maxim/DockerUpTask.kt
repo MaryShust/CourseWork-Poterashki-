@@ -6,10 +6,10 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecOperations
 import javax.inject.Inject
 
-class DockerUpTask(
-    @Inject
-    private val execOperations: ExecOperations
-): DefaultTask() {
+abstract class DockerUpTask: DefaultTask() {
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
 
     val composeFilePath: Property<String> = project.objects
         .property(String::class.java)

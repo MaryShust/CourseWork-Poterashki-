@@ -9,10 +9,10 @@ import javax.inject.Inject
 /**
  * Сборка docker image
  */
-open class DockerImageBuildTask(
-    @Inject
-    private val execOperations: ExecOperations
-) : DefaultTask() {
+abstract class DockerImageBuildTask : DefaultTask() {
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
 
     val imageName: Property<String> = project.objects
         .property(String::class.java)

@@ -16,5 +16,10 @@ gradlePlugin {
             id = "com.maxim.docker-plugin"
             implementationClass = "com.maxim.DockerPlugin"
         }
+
+        create("docker-compose-plugin") {
+            id = "com.maxim.docker-compose-plugin"
+            implementationClass = "com.maxim.DockerComposePlugin"
+        }
     }
 }

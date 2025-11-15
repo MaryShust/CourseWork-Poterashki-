@@ -6,10 +6,11 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecOperations
 import javax.inject.Inject
 
-class DockerDownTask (
-    @Inject
-    private val execOperations: ExecOperations
-): DefaultTask() {
+abstract class DockerDownTask : DefaultTask() {
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
     val composeFilePath: Property<String> = project.objects
         .property(String::class.java)
         .convention("compose.yaml")
@@ -27,9 +28,11 @@ class DockerDownTask (
         logger.info("Executing docker compose down for {}", composeFilePath)
 
         execOperations.exec {
-            commandLine("docker", "compose",
+            commandLine(
+                "docker", "compose",
                 "-f", composeFile.absolutePath,
-                "down")
+                "down"
+            )
         }.assertNormalExitValue()
 
         logger.info("Successful down of {}", composeFilePath)

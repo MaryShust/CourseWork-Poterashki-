@@ -19,12 +19,6 @@ open class DockerPlugin : Plugin<Project> {
                 dockerBuildContext.set(extension.dockerBuildContext)
                 dependsOn(tasks.getByName("jar"))
             }
-            tasks.register("dockerUp", DockerUpTask::class.java) {
-                composeFilePath.set(extension.composeFile)
-            }
-            tasks.register("dockerDown", DockerDownTask::class.java) {
-                composeFilePath.set(extension.dockerfile)
-            }
         }
 
     }
@@ -43,7 +37,4 @@ open class DockerExtension(project: Project) {
     val dockerBuildContext:  Property<String> = project.objects
         .property(String::class.java)
         .convention(project.projectDir.absolutePath)
-    val composeFile: Property<String> = project.objects
-        .property(String::class.java)
-        .convention("docker-compose.yml")
 }
