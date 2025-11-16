@@ -5,8 +5,8 @@ plugins {
     kotlin("jvm") version "2.1.21"
     `java-library`
     kotlin("plugin.spring") version "2.1.21" apply false
-    id("org.springframework.boot") version "3.2.0" apply false
-    id("io.spring.dependency-management") version "1.1.4" apply false
+    id("org.springframework.boot") version "3.5.7" apply false
+    id("io.spring.dependency-management") version "1.1.7" apply false
     id("com.maxim.docker-plugin") apply false
     id("com.maxim.docker-compose-plugin") apply false
 }
