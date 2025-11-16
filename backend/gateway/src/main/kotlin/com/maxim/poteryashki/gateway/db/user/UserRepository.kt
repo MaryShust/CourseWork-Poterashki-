@@ -14,17 +14,16 @@ interface UserRepository : CrudRepository<UserDb, UUID> {
     @Query("""UPDATE user SET 
         name = :name,
         password = :password,
-        role = :role,
         metadata = :metadata
         WHERE id = :id
     """)
-    fun update(id: UUID, name: String, password: String, role:String, metadata: String)
+    fun update(id: UUID, name: String, password: String, metadata: String)
 
     @Modifying
     @Query(""" INSERT INTO user(name, password, metadata) 
         VALUES (:name, :password, :metadata) RETURNING id;
     """)
-    fun create(name: String, password: String, role: String, metadata: String): UUID
+    fun create(name: String, password: String, metadata: String): UUID
 
     @Query("""
         SELECT * FROM user WHERE id = :id

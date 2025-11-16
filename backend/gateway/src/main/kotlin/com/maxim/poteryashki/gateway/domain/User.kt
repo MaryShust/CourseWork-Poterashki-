@@ -2,6 +2,9 @@ package com.maxim.poteryashki.gateway.domain
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
+import java.time.LocalDateTime
 import java.util.UUID
 
 data class User(
@@ -15,8 +18,6 @@ data class User(
 
     val password: String,
 
-    val role: Role,
-
     val userMetadata: UserMetadata
 )
 
@@ -26,13 +27,22 @@ data class User(
 @JsonSubTypes(
     JsonSubTypes.Type(value = BasicUserMetadata::class, name = "BasicMetadata")
 )
-sealed interface UserMetadata
+sealed interface UserMetadata {
+    val createdAt: LocalDateTime
+    val isDeleted: Boolean
+    val isBanned: Boolean
+    val role: Role
+}
 
 data class BasicUserMetadata(
     /**
      * Реальное имя человека
      */
-    private val name: String, private val surname: String
+    private val name: String,
+    private val surname: String,
+    override val createdAt: LocalDateTime,
+    override val isDeleted: Boolean,
+    override val isBanned: Boolean, override val role: Role
 ) : UserMetadata
 
 enum class Role {

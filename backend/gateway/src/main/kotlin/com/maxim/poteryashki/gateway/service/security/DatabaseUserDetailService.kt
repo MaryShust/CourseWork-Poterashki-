@@ -1,28 +1,27 @@
 package com.maxim.poteryashki.gateway.service.security
 
 import com.maxim.poteryashki.gateway.db.user.UserDao
-import org.springframework.security.core.userdetails.User
+import com.maxim.poteryashki.gateway.domain.User
+
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.provisioning.UserDetailsManager
-import org.springframework.stereotype.Component
+import org.springframework.security.core.userdetails.User as SpringSecurityUser
 
 
 class DatabaseUserDetailService(
     private val userDao: UserDao
-): UserDetailsManager {
+): UserDetailsService {
 
-    //TODO реализовать по нормальному spring security
     override fun loadUserByUsername(username: String?): UserDetails? =
         username
             ?.let { userDao.getByName(it) }
             ?.toUserDetails()
 
 
-    private fun com.maxim.poteryashki.gateway.domain.User.toUserDetails(): UserDetails {
-        return User.withUsername(name)
+    private fun User.toUserDetails(): UserDetails {
+        return SpringSecurityUser.withUsername(name)
             .password(password)
-            .roles(role.name)
+            .roles(userMetadata.role.name)
             .build()
     }
 }

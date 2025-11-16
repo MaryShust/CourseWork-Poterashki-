@@ -12,8 +12,6 @@ data class UserDb(
 
     val password: String,
 
-    val role: String,
-
     val metadata: String
 
 )

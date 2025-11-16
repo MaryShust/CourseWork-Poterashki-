@@ -17,7 +17,6 @@ class UserDao(
         .create(
             user.name,
             user.password,
-            user.role.name,
             objectMapper.writeValueAsString(user.userMetadata)
         )
 
@@ -26,7 +25,6 @@ class UserDao(
             user.id!!,
             user.name,
             user.password,
-            user.role.name,
             objectMapper.writeValueAsString(user.userMetadata)
         )
 
@@ -41,7 +39,6 @@ class UserDao(
         id,
         name,
         password,
-        Role.valueOf(role),
         objectMapper.readValue(metadata, UserMetadata::class.java)
     )
 
