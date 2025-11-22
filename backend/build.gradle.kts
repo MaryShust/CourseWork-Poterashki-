@@ -7,8 +7,7 @@ plugins {
     kotlin("plugin.spring") version "2.1.21" apply false
     id("org.springframework.boot") version "3.5.7" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
-    id("com.maxim.docker-plugin") apply false
-    id("com.maxim.docker-compose-plugin") apply false
+    id("com.google.cloud.tools.jib") version "3.4.2" apply false
 }
 
 allprojects {
@@ -26,8 +25,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.plugin.spring")
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
-    apply(plugin = "com.maxim.docker-plugin")
-    apply(plugin = "com.maxim.docker-compose-plugin")
+    apply(plugin="com.google.cloud.tools.jib")
 
     // Общая конфигурация Java для всех подпроектов
     configure<JavaPluginExtension> {
@@ -46,12 +44,14 @@ subprojects {
         //Database
         implementation("org.liquibase:liquibase-core")
         implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+        implementation("org.postgresql:postgresql")
 
         // Kotlin
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
         // Тестирование
+        testImplementation("org.springframework.boot:spring-boot-starter-test")
         testImplementation("org.springframework.boot:spring-boot-testcontainers")
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
         testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -76,17 +76,4 @@ subprojects {
     tasks.withType<BootRun> {
         systemProperties(System.getProperties().mapKeys { it.key.toString() })
     }
-}
-
-// Альтернативный вариант - если хотите запускать dockerUp для всех подпроектов
-val subprojectsUp = tasks.register("dockerUpAll") {
-    dependsOn(subprojects.map { ":${it.name}:dockerUp" })
-    group = "docker"
-    description = "Starts all Docker containers for all subprojects"
-}
-
-val subprojectsDown = tasks.register("dockerDownAll") {
-    dependsOn(subprojects.map { ":${it.name}:dockerDown" })
-    group = "docker"
-    description = "Stops all Docker containers for all subprojects"
 }
