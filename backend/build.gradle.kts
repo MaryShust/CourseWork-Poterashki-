@@ -1,3 +1,4 @@
+import com.google.cloud.tools.jib.gradle.JibExtension
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 import org.springframework.boot.gradle.tasks.run.BootRun
 
@@ -26,6 +27,20 @@ subprojects {
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin="com.google.cloud.tools.jib")
+
+    // Общая конфигурация Jib для всех микросервисов
+    plugins.withId("com.google.cloud.tools.jib") {
+        extensions.configure(JibExtension::class.java) {
+            from.image = "eclipse-temurin:17-jre-alpine"
+            // Имя итогового образа: <имя_проекта>:local (совпадает с docker-compose)
+            to.image = project.name
+            to.tags = setOf("latest")
+
+            // Для Spring Boot mainClass обычно определяется автоматически
+            container.ports = listOf("8080")
+            container.jvmFlags = listOf("-Xms256m", "-Xmx512m")
+        }
+    }
 
     // Общая конфигурация Java для всех подпроектов
     configure<JavaPluginExtension> {
