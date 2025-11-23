@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:15-alpine
+    env_file:
+      - ./env/user.env
+    environment:
+      # Админские креды
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+      POSTGRES_DB: postgres
+
+      DB_NAMES: ${DB_NAMES}  # например: app_a,app_b,service_c
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db_data:

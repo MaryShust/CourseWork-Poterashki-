@@ -4,3 +4,4 @@ plugins {
 rootProject.name = "backend"
 
 include("gateway")
+include("lost")
