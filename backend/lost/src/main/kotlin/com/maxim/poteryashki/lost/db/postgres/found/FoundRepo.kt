@@ -1,4 +1,4 @@
-package com.maxim.poteryashki.lost.db.found
+package com.maxim.poteryashki.lost.db.postgres.found
 
 import org.springframework.data.repository.CrudRepository
 

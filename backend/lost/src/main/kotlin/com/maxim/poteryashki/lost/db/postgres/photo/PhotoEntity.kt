@@ -1,4 +1,4 @@
-package com.maxim.poteryashki.lost.db.photo
+package com.maxim.poteryashki.lost.db.postgres.photo
 
 import org.springframework.data.annotation.Id
 

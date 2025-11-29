@@ -1,4 +1,4 @@
-package com.maxim.poteryashki.lost.db.completed
+package com.maxim.poteryashki.lost.db.postgres.completed
 
 import java.time.LocalDateTime
 
