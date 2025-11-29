@@ -7,7 +7,7 @@
     <changeSet id="lost-table" author="m.s.taranenko">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="token"/>
+                <tableExists tableName="place"/>
             </not>
         </preConditions>
         <sql>

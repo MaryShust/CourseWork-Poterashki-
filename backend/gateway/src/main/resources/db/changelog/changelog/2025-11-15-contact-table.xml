@@ -7,7 +7,7 @@
     <changeSet id="user-table" author="m.s.taranenko">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="user"/>
+                <tableExists tableName="contact"/>
             </not>
         </preConditions>
         <sql>
