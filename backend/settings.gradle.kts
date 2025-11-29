@@ -5,3 +5,4 @@ rootProject.name = "backend"
 
 include(":gateway")
 include(":lost")
+include(":notification")
