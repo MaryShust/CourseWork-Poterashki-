@@ -1,0 +1,339 @@
+openapi: 3.0.3
+info:
+  title: Lost & Found API
+  description: API для управления вещами (потерянные и найденные)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+    description: Локальный сервер
+
+paths:
+  /things:
+    post:
+      summary: Получить список вещей с фильтрацией
+      operationId: getThings
+
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThingGetDto'
+
+      responses:
+        '200':
+          description: Список вещей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Thing'
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+  /things/by-owner:
+    get:
+      summary: Получить вещь по ID
+      operationId: getThingById
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      responses:
+        '200':
+          description: Данные вещи
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Thing'
+        '404':
+          description: Пользователь не найден
+  /thing/{id}:
+    get:
+      summary: Получить вещь по ID
+      operationId: getThingById
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      responses:
+        '200':
+          description: Данные вещи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+        '404':
+          description: Вещь не найдена
+    post:
+      summary: Обновить статус вещи
+      operationId: updateThingStatus
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThingGetDto'
+      responses:
+        '200':
+          description: Успешно обновлен
+        '404':
+          description: Вещь не найдена
+        '403':
+          description: Недостаточно прав
+
+components:
+  schemas:
+    ThingCreateDto:
+      type: object
+      required:
+        - type
+        - date
+        - place
+        - description
+      properties:
+        type:
+          $ref: '#/components/schemas/ThingType'
+        date:
+          type: string
+          format: date-time
+          description: Дата потери (для LOST) или обнаружения (для FOUND)
+          example: "2023-10-04T10:15:00Z"
+        place:
+          $ref: '#/components/schemas/Place'
+        description:
+          type: string
+          description: Описание вещи
+          example: "Черный рюкзак с логотипом университета"
+    ThingGetDto:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ThingType'
+        date:
+          type: string
+          format: date-time
+          description: Дата потери (для LOST) или обнаружения (для FOUND)
+          example: "2023-10-04T10:15:00Z"
+        place:
+          $ref: '#/components/schemas/Place'
+        description:
+          type: string
+          description: Описание вещи
+          example: "Черный рюкзак с логотипом университета"
+        completed:
+          type: boolean
+          description: Статус завершенности
+          example: false
+
+    Thing:
+      type: object
+      required:
+        - owner
+        - type
+        - date
+        - place
+        - description
+        - photos
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор вещи
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        owner:
+          type: string
+          format: uuid
+          description: Идентификатор владельца
+          example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+        type:
+          $ref: '#/components/schemas/ThingType'
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата создания записи
+          example: "2023-10-05T12:30:00Z"
+        date:
+          type: string
+          format: date-time
+          description: Дата потери (для LOST) или обнаружения (для FOUND)
+          example: "2023-10-04T10:15:00Z"
+        place:
+          $ref: '#/components/schemas/Place'
+        description:
+          type: string
+          description: Описание вещи
+          example: "Черный рюкзак с логотипом университета"
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Список ссылок на фотографии
+          example:
+            - "https://example.com/photos/1.jpg"
+            - "https://example.com/photos/2.jpg"
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата завершения (например, возврат вещи)
+          example: "2023-10-06T14:00:00Z"
+
+    ThingType:
+      type: string
+      enum:
+        - LOST
+        - FOUND
+      description: Тип вещи — потерянная или найденная
+
+    Place:
+      type: object
+      required:
+        - city
+      properties:
+        city:
+          type: string
+          description: Город
+          example: "Москва"
+        street:
+          type: string
+          nullable: true
+          description: Улица
+          example: "Ленинский проспект"
+        house:
+          type: string
+          nullable: true
+          description: Номер дома
+          example: "25"
+        placeName:
+          type: string
+          nullable: true
+          description: Название места (например, кафе, магазин)
+          example: "Кафе у вокзала"
+        extraDescription:
+          type: string
+          nullable: true
+          description: Дополнительное описание места
+          example: "Оставил у стойки администратора"
+
+    ThingCreateRequest:
+      type: object
+      required:
+        - owner
+        - type
+        - date
+        - place
+        - description
+        - photos
+      properties:
+        owner:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+        type:
+          $ref: '#/components/schemas/ThingType'
+        date:
+          type: string
+          format: date-time
+          example: "2023-10-04T10:15:00Z"
+        place:
+          $ref: '#/components/schemas/Place'
+        description:
+          type: string
+          example: "Черный рюкзак с логотипом университета"
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://example.com/photos/1.jpg"
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-10-06T14:00:00Z"
+
+    ThingUpdateRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+          example: "2023-10-04T11:00:00Z"
+        place:
+          $ref: '#/components/schemas/Place'
+        description:
+          type: string
+          example: "Черный рюкзак, внутри учебники"
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://example.com/photos/updated.jpg"
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-10-06T14:00:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Описание ошибки
+          example: "Вещь не найдена"
+        code:
+          type: string
+        stacktrace:
+          type: string
+          description: Стек вызовов ошибки
+          example: "java.lang.Exception: Вещь не найдена"
