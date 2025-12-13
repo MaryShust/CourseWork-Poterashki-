@@ -125,6 +125,76 @@ paths:
           description: Вещь не найдена
         '403':
           description: Недостаточно прав
+  /things/create:
+    post:
+      summary: Создать новую вещь с фотографиями
+      description: |
+        Создаёт вещь. Фотографии загружаются напрямую.
+        Используй multipart/form-data.
+      operationId: createThing
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - type
+                - date
+                - place
+                - description
+                - photos
+              properties:
+                type:
+                  $ref: '#/components/schemas/ThingType'
+                date:
+                  type: string
+                  format: date-time
+                  example: "2023-10-04T10:15:00Z"
+                place:
+                  $ref: '#/components/schemas/Place'
+                description:
+                  type: string
+                  example: "Черный рюкзак с логотипом университета"
+                photos:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Массив фотографий
+      responses:
+        '201':
+          description: Вещь успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+        '400':
+          description: Ошибка валидации или файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
 components:
   schemas:
@@ -323,6 +393,11 @@ components:
           format: date-time
           nullable: true
           example: "2023-10-06T14:00:00Z"
+    ThingIdResponse:
+      type: string
+      format: uuid
+      description: Уникальный идентификатор вещи
+      example: "550e8400-e29b-41d4-a716-446655440000"
 
     ErrorResponse:
       type: object
