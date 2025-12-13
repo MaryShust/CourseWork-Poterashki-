@@ -55,7 +55,7 @@ paths:
   /things/by-owner:
     get:
       summary: Получить вещь по ID
-      operationId: getThingById
+      operationId: getThingByOwner
       parameters:
         - in: header
           name: Authorization
@@ -83,6 +83,7 @@ paths:
           name: id
           schema:
             type: string
+          required: true
         - in: header
           name: Authorization
           schema:
@@ -106,6 +107,7 @@ paths:
           name: id
           schema:
             type: string
+          required: true
         - in: header
           name: Authorization
           schema:
@@ -142,33 +144,9 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              required:
-                - type
-                - date
-                - place
-                - description
-                - photos
-              properties:
-                type:
-                  $ref: '#/components/schemas/ThingType'
-                date:
-                  type: string
-                  format: date-time
-                  example: "2023-10-04T10:15:00Z"
-                place:
-                  $ref: '#/components/schemas/Place'
-                description:
-                  type: string
-                  example: "Черный рюкзак с логотипом университета"
-                photos:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  description: Массив фотографий
+              $ref: '#/components/schemas/ThingCreateDto'
       responses:
         '201':
           description: Вещь успешно создана
@@ -184,6 +162,55 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /thing/{id}/upload-photo:
+    post:
+      summary: Загрузить фото для вещи
+      description: |
+        Загружает фото для существующей вещи.
+        Фотографии загружаются напрямую.
+        Используй multipart/form-data.
+      operationId: uploadPhoto
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Фото для загрузки
+      responses:
+        '200':
+          description: Фото успешно загружено
+        '403':
+          description: Недостаточно прав
+        '400':
+          description: Ошибка валидации или файла
           content:
             application/json:
               schema:

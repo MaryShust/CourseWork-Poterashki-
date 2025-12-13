@@ -9,6 +9,7 @@ plugins {
     id("org.springframework.boot") version "3.5.7" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
     id("com.google.cloud.tools.jib") version "3.4.2" apply false
+    id("org.openapi.generator") version "7.8.0" apply false
 }
 
 allprojects {
@@ -27,6 +28,8 @@ subprojects {
     apply(plugin = "org.springframework.boot")
     apply(plugin = "io.spring.dependency-management")
     apply(plugin="com.google.cloud.tools.jib")
+    apply(plugin = "org.openapi.generator")
+    apply(plugin = "application")
 
     // Общая конфигурация Jib для всех микросервисов
     plugins.withId("com.google.cloud.tools.jib") {
@@ -55,6 +58,8 @@ subprojects {
         implementation("org.springframework.boot:spring-boot-starter-web")
         implementation("org.springframework.boot:spring-boot-starter-validation")
         implementation("org.springframework.boot:spring-boot-starter-actuator")
+        implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0") // или актуальная 2.6.x
+
 
         //Database
         implementation("org.liquibase:liquibase-core")
