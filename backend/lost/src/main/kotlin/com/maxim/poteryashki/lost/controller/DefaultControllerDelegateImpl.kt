@@ -6,7 +6,9 @@ import com.maxim.poteryashki.lost.dto.ThingCreateDto
 import com.maxim.poteryashki.lost.dto.ThingGetDto
 import org.springframework.core.io.Resource
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Component
 
+@Component
 class DefaultControllerDelegateImpl(
 
 ): DefaultApiDelegate {

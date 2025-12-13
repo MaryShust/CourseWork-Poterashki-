@@ -1,4 +1,4 @@
-package com.maxim.poteryashki.lost.db
+package com.maxim.poteryashki.lost.adapter.db
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.elasticsearch.annotations.DateFormat
@@ -22,6 +22,16 @@ data class Thing(
 
     @Field(type = FieldType.Date, format = [DateFormat.date_time])
     val createdAt: Instant,
+
+    /**
+     * В зависимости от типа либо
+     *
+     * [com.maxim.poteryashki.lost.db.ThingType.LOST] - дата потери
+     *
+     * [com.maxim.poteryashki.lost.db.ThingType.FOUND] - дата обнаружения
+     */
+    @Field(type = FieldType.Date, format = [DateFormat.date_time])
+    val date: Instant,
 
     @Field(type = FieldType.Nested)
     val place: Place,

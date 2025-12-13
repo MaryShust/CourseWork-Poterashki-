@@ -1,4 +1,4 @@
-package com.maxim.poteryashki.lost.s3
+package com.maxim.poteryashki.lost.adapter.s3
 
 import io.minio.MinioClient
 import org.springframework.boot.context.properties.ConfigurationProperties
