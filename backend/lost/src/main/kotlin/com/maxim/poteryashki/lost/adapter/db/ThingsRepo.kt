@@ -101,15 +101,8 @@ class ThingRepositoryImpl(
     }
 
     override fun getById(id: String): ThingEntity? {
-        val esQuery = Q.term {
-            it.field("id.keyword").value(FieldValue.of(id))
-        }
-        val query = NativeQuery.builder()
-            .withQuery(esQuery)
-            .build()
-
-        val hits = operations.search(query, ThingEntity::class.java)
-        return hits.map { it.content }.firstOrNull()
+        val result = operations.get<ThingEntity>(id, ThingEntity::class.java)
+        return result
     }
 
     override fun create(thingEntity: ThingEntity): ThingEntity {
