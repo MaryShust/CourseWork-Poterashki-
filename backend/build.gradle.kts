@@ -61,16 +61,11 @@ subprojects {
         implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0") // или актуальная 2.6.x
 
 
-        //Database
-        implementation("org.liquibase:liquibase-core")
-        implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-        implementation("org.postgresql:postgresql")
-
         // Kotlin
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-        // Тестирование
+        // Testing
         testImplementation("org.springframework.boot:spring-boot-starter-test")
         testImplementation("org.springframework.boot:spring-boot-testcontainers")
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
