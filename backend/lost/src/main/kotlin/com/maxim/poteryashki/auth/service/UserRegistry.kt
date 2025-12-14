@@ -48,4 +48,8 @@ class UserRegistry(
         return userDao.update(user)
     }
 
+    fun getUserById(id: UUID): User? {
+        return userDao.getById(id)
+    }
+
 }

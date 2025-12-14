@@ -8,7 +8,8 @@ info:
     email: support@example.com
     
 tags:
-  - public
+  - auth
+  - profile
 
 servers:
   - url: http://localhost:8080/api/public
@@ -21,7 +22,7 @@ paths:
       description: Возвращает токен и userId при успешном входе
       operationId: login
       tags:
-        - public
+        - auth
       requestBody:
         required: true
         content:
@@ -37,13 +38,34 @@ paths:
                 $ref: '#/components/schemas/GetTokenResponse'
         '401':
           description: Неверный email или пароль
+
+  /register:
+    post:
+      summary: Регистрация нового пользователя
+      description: Создаёт нового пользователя и возвращает токен
+      operationId: register
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Пользователь успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTokenResponse'
   /my-profile:
     get:
       summary: Получение информации о пользователе
       description: Возвращает информацию о пользователе по токену
       operationId: getProfile
       tags:
-        - public
+        - profile
       parameters:
         - in: header
           name: Authorization
@@ -65,7 +87,7 @@ paths:
       description: Обновляет информацию о пользователе по токену
       operationId: updateProfile
       tags:
-        - public
+        - profile
       parameters:
         - in: header
           name: Authorization
@@ -84,58 +106,38 @@ paths:
           description: Успешное обновление
         '401':
           description: Пользователь не авторизован
-
-  /register:
-    post:
-      summary: Регистрация нового пользователя
-      description: Создаёт нового пользователя и возвращает токен
-      operationId: register
+  /user/{id}/profile:
+    get:
+      summary: Получение информации о пользователе
+      description: Возвращает информацию о пользователе по токену
+      operationId: getProfileForUser
       tags:
-        - public
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
-      responses:
-        '200':
-          description: Пользователь успешно зарегистрирован
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetTokenResponse'
-
-  /resolve-user-id:
-    post:
-      summary: Получить userId по токену
-      description: Проверяет токен и возвращает userId
-      operationId: getUserIdFromToken
-      tags:
-        - internal
+        - profile
       parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
         - in: header
           name: Authorization
           schema:
             type: string
           required: true
-          description: Токен сервиса - для базовой авторизации сервисов
-
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TokenRequest'
+          description: Токен пользователя
       responses:
         '200':
-          description: Токен валиден, userId извлечён
+          description: Профиль успешно получен
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserIdResponse'
+                $ref: '#/components/schemas/GetProfileResponse'
         '401':
-          description: Невалидный или просроченный токен
+          description: Пользователь не авторизован
+        '404':
+          description: Пользователь не найден
+
 
 components:
   schemas:
