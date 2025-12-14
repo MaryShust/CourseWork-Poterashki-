@@ -1,0 +1,517 @@
+openapi: 3.0.3
+info:
+  title: Lost & Found API
+  description: API для управления вещами (потерянные и найденные)
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+    description: Локальный сервер
+
+tags:
+  - name: things
+
+paths:
+  /things:
+    post:
+      summary: Получить список вещей с фильтрацией
+      operationId: getThings
+
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Номер страницы (с нуля)
+        - in: query
+          name: size
+          schema:
+           type: integer
+           default: 20
+           minimum: 1
+           maximum: 100
+          description: Размер страницы
+        - in: query
+          name: sort
+          schema:
+           type: array
+           items:
+             type: string
+          style: form
+          explode: false
+          description: >
+           Поля для сортировки в формате `field,order` (например, `date,desc`).
+           Можно указать несколько параметров.
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThingGetDto'
+
+      responses:
+        '200':
+          description: Список вещей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThingDto'
+        '400':
+          description: Неверный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+  /things/by-owner:
+    get:
+      summary: Получить вещь по ID
+      operationId: getThingByOwner
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      x-spring-provide-args:
+        - 'org.springframework.data.domain.Pageable pageable'
+      responses:
+        '200':
+          description: Данные вещи
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThingDto'
+        '404':
+          description: Пользователь не найден
+  /thing/{id}:
+    get:
+      summary: Получить вещь по ID
+      operationId: getThingById
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      responses:
+        '200':
+          description: Данные вещи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThingDto'
+        '404':
+          description: Вещь не найдена
+    post:
+      summary: Обновить статус вещи
+      operationId: updateThingStatus
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThingGetDto'
+      responses:
+        '200':
+          description: Успешно обновлен
+        '404':
+          description: Вещь не найдена
+        '403':
+          description: Недостаточно прав
+  /things/create:
+    post:
+      summary: Создать новую вещь с фотографиями
+      description: |
+        Создаёт вещь. Фотографии загружаются напрямую.
+        Используй multipart/form-data.
+      operationId: createThing
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThingCreateDto'
+      responses:
+        '201':
+          description: Вещь успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThingDto'
+        '400':
+          description: Ошибка валидации или файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /thing/{id}/upload-photo:
+    post:
+      summary: Загрузить фото для вещи
+      description: |
+        Загружает фото для существующей вещи.
+        Фотографии загружаются напрямую.
+        Используй multipart/form-data.
+      operationId: uploadPhoto
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: version
+          schema:
+            type: integer
+            format: int64
+            default: 1
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Фото для загрузки
+      responses:
+        '200':
+          description: Фото успешно загружено
+        '403':
+          description: Недостаточно прав
+        '409':
+          description: Конфликт версий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+components:
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      description: Номер страницы (с нуля)
+    SizeParam:
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Размер страницы
+    SortParam:
+      in: query
+      name: sort
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: false
+      description: >
+        Поля для сортировки в формате `field,order` (например, `date,desc`).
+        Можно указать несколько.
+  schemas:
+    ThingCreateDto:
+      type: object
+      required:
+        - type
+        - date
+        - place
+        - description
+      properties:
+        type:
+          $ref: '#/components/schemas/ThingTypeDto'
+        date:
+          type: string
+          format: date-time
+          description: Дата потери (для LOST) или обнаружения (для FOUND)
+          example: "2023-10-04T10:15:00Z"
+        place:
+          $ref: '#/components/schemas/PlaceDto'
+        description:
+          type: string
+          description: Описание вещи
+          example: "Черный рюкзак с логотипом университета"
+    ThingGetDto:
+      type: object
+      required:
+        - place
+      properties:
+        type:
+          $ref: '#/components/schemas/ThingTypeDto'
+        date:
+          type: string
+          format: date-time
+          description: Дата потери (для LOST) или обнаружения (для FOUND)
+          example: "2023-10-04T10:15:00Z"
+        place:
+          $ref: '#/components/schemas/PlaceDto'
+        description:
+          type: string
+          description: Описание вещи
+          example: "Черный рюкзак с логотипом университета"
+        completed:
+          type: boolean
+          description: Статус завершенности
+          example: false
+
+    ThingDto:
+      type: object
+      required:
+        - owner
+        - type
+        - date
+        - place
+        - description
+        - photos
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор вещи
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        owner:
+          type: string
+          format: uuid
+          description: Идентификатор владельца
+          example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+        type:
+          $ref: '#/components/schemas/ThingTypeDto'
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата создания записи
+          example: "2023-10-05T12:30:00Z"
+        date:
+          type: string
+          format: date-time
+          description: Дата потери (для LOST) или обнаружения (для FOUND)
+          example: "2023-10-04T10:15:00Z"
+        place:
+          $ref: '#/components/schemas/PlaceDto'
+        description:
+          type: string
+          description: Описание вещи
+          example: "Черный рюкзак с логотипом университета"
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+          description: Список ссылок на фотографии
+          example:
+            - "https://example.com/photos/1.jpg"
+            - "https://example.com/photos/2.jpg"
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата завершения (например, возврат вещи)
+          example: "2023-10-06T14:00:00Z"
+        version:
+          type: integer
+          format: int64
+          description: Версия записи (для обеспечения согласованности)
+          example: 1
+
+    ThingTypeDto:
+      type: string
+      enum:
+        - LOST
+        - FOUND
+      description: Тип вещи — потерянная или найденная
+
+    PlaceDto:
+      type: object
+      required:
+        - city
+      properties:
+        city:
+          type: string
+          description: Город
+          example: "Москва"
+        street:
+          type: string
+          nullable: true
+          description: Улица
+          example: "Ленинский проспект"
+        house:
+          type: string
+          nullable: true
+          description: Номер дома
+          example: "25"
+        placeName:
+          type: string
+          nullable: true
+          description: Название места (например, кафе, магазин)
+          example: "Кафе у вокзала"
+        extraDescription:
+          type: string
+          nullable: true
+          description: Дополнительное описание места
+          example: "Оставил у стойки администратора"
+
+    ThingCreateRequest:
+      type: object
+      required:
+        - owner
+        - type
+        - date
+        - place
+        - description
+        - photos
+      properties:
+        owner:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+        type:
+          $ref: '#/components/schemas/ThingTypeDto'
+        date:
+          type: string
+          format: date-time
+          example: "2023-10-04T10:15:00Z"
+        place:
+          $ref: '#/components/schemas/PlaceDto'
+        description:
+          type: string
+          example: "Черный рюкзак с логотипом университета"
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://example.com/photos/1.jpg"
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-10-06T14:00:00Z"
+
+    ThingUpdateRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+          example: "2023-10-04T11:00:00Z"
+        place:
+          $ref: '#/components/schemas/PlaceDto'
+        description:
+          type: string
+          example: "Черный рюкзак, внутри учебники"
+        photos:
+          type: array
+          items:
+            type: string
+            format: uri
+          example:
+            - "https://example.com/photos/updated.jpg"
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2023-10-06T14:00:00Z"
+    ThingIdResponse:
+      type: string
+      format: uuid
+      description: Уникальный идентификатор вещи
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Описание ошибки
+          example: "Вещь не найдена"
+        code:
+          type: string
+        stacktrace:
+          type: string
+          description: Стек вызовов ошибки
+          example: "java.lang.Exception: Вещь не найдена"

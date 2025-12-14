@@ -3,6 +3,6 @@ plugins {
 }
 rootProject.name = "backend"
 
-include(":gateway")
+include(":auth")
 include(":lost")
 include(":notification")
