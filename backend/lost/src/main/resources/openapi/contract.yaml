@@ -20,6 +20,32 @@ paths:
             type: string
           required: true
           description: Токен
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Номер страницы (с нуля)
+        - in: query
+          name: size
+          schema:
+           type: integer
+           default: 20
+           minimum: 1
+           maximum: 100
+          description: Размер страницы
+        - in: query
+          name: sort
+          schema:
+           type: array
+           items:
+             type: string
+          style: form
+          explode: false
+          description: >
+           Поля для сортировки в формате `field,order` (например, `date,desc`).
+           Можно указать несколько параметров.
 
       requestBody:
         required: true
@@ -63,6 +89,11 @@ paths:
             type: string
           required: true
           description: Токен пользователя
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      x-spring-provide-args:
+        - 'org.springframework.data.domain.Pageable pageable'
       responses:
         '200':
           description: Данные вещи
@@ -187,6 +218,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: query
+          name: version
+          schema:
+            type: integer
+            format: int64
+            default: 1
         - in: header
           name: Authorization
           schema:
@@ -209,12 +246,6 @@ paths:
           description: Фото успешно загружено
         '403':
           description: Недостаточно прав
-        '400':
-          description: Ошибка валидации или файла
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Конфликт версий
           content:
@@ -230,6 +261,36 @@ paths:
 
 
 components:
+  parameters:
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      description: Номер страницы (с нуля)
+    SizeParam:
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+      description: Размер страницы
+    SortParam:
+      in: query
+      name: sort
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: false
+      description: >
+        Поля для сортировки в формате `field,order` (например, `date,desc`).
+        Можно указать несколько.
   schemas:
     ThingCreateDto:
       type: object
@@ -254,6 +315,8 @@ components:
           example: "Черный рюкзак с логотипом университета"
     ThingGetDto:
       type: object
+      required:
+        - place
       properties:
         type:
           $ref: '#/components/schemas/ThingTypeDto'
@@ -285,7 +348,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
           description: Уникальный идентификатор вещи
           example: "550e8400-e29b-41d4-a716-446655440000"
         owner:

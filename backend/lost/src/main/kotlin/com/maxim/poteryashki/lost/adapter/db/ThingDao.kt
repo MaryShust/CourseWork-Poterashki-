@@ -2,6 +2,7 @@ package com.maxim.poteryashki.lost.adapter.db
 
 import com.maxim.poteryashki.lost.domain.Place
 import com.maxim.poteryashki.lost.domain.Thing
+import com.maxim.poteryashki.lost.domain.ThingType
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -21,7 +22,7 @@ class ThingDao(
     ): List<Thing> =
         thingRepository.findAllBy(
             ThingFilter(
-                type = type,
+                type = type?.toEntity(),
                 date = date,
                 place = place.toEntity(),
                 description = description,

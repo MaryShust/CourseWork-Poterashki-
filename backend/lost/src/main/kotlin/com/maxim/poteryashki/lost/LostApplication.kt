@@ -1,6 +1,6 @@
 package com.maxim.poteryashki.lost
 
-import com.maxim.poteryashki.lost.s3.MinioProperties
+import com.maxim.poteryashki.lost.adapter.s3.MinioProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication

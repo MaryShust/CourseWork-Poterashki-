@@ -1,11 +1,9 @@
 package com.maxim.poteryashki.lost.service
 
 import com.maxim.poteryashki.lost.adapter.db.ThingDao
-import com.maxim.poteryashki.lost.adapter.db.ThingFilter
-import com.maxim.poteryashki.lost.adapter.db.ThingRepository
-import com.maxim.poteryashki.lost.adapter.db.ThingType
 import com.maxim.poteryashki.lost.domain.Place
 import com.maxim.poteryashki.lost.domain.Thing
+import com.maxim.poteryashki.lost.domain.ThingType
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import java.time.Instant

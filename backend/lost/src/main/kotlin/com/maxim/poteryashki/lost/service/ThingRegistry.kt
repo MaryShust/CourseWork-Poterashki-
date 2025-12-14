@@ -1,18 +1,16 @@
 package com.maxim.poteryashki.lost.service
 
 import com.maxim.poteryashki.lost.adapter.db.ThingDao
-import com.maxim.poteryashki.lost.adapter.db.ThingRepository
 import com.maxim.poteryashki.lost.adapter.s3.S3Adapter
 import com.maxim.poteryashki.lost.domain.Place
 import com.maxim.poteryashki.lost.domain.Thing
 import com.maxim.poteryashki.lost.domain.ThingType
 import com.maxim.poteryashki.lost.domain.exception.ThingNotFoundException
 import com.maxim.poteryashki.lost.domain.exception.ThingVersionMismatchException
-import com.maxim.poteryashki.lost.dto.ThingCreateDto
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 private val logger = LoggerFactory.getLogger(ThingRegistry::class.java)
 
