@@ -18,7 +18,7 @@ private val logger = LoggerFactory.getLogger(S3Adapter::class.java)
 class S3Adapter(
     private val minioClient: MinioClient,
 
-    @Value("#{app.s3.photo-bucket}")
+    @Value("\${app.s3.photo-bucket}")
     private val minioBucket: String,
 ) {
 

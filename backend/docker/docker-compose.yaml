@@ -1,24 +1,86 @@
 services:
-  db:
-    image: postgres:15-alpine
-    env_file:
-      - ./env/user.env
+#  db:
+#    image: postgres:15-alpine
+#    env_file:
+#      - ./env/user.env
+#    environment:
+#      # Админские креды
+#      POSTGRES_USER: ${DB_USER}
+#      POSTGRES_PASSWORD: ${DB_PASSWORD}
+#
+#      POSTGRES_DB: postgres
+#
+#      DB_NAMES: ${DB_NAMES}  # например: app_a,app_b,service_c
+#    volumes:
+#      - db_data:/var/lib/postgresql/data
+#    healthcheck:
+#      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d postgres"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 10
+#    restart: unless-stopped
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    container_name: elasticsearch
     environment:
-      # Админские креды
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-
-      POSTGRES_DB: postgres
-
-      DB_NAMES: ${DB_NAMES}  # например: app_a,app_b,service_c
+      - discovery.type=single-node
+      - ES_HTTP_SSL_ENABLED=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      # Отключаем security (для dev). Для prod — включи!
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - app-network
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - esdata:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d postgres"]
-      interval: 5s
+      test: [ "CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.3
+    container_name: kibana
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_HOSTS=["http://elasticsearch:9200"]
+      - ELASTICSEARCH_SSL_VERIFICATIONMODE=none
+    ports:
+      - "5601:5601"
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --silent --fail localhost:5601/api/status" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "8000:9000" # S3 API
+      - "8001:9001" # Web UI (console)
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 10s
       timeout: 5s
       retries: 10
-    restart: unless-stopped
+    networks:
+      - app-network
 
 volumes:
-  db_data:
+  esdata:
+
+networks:
+  app-network:
+    driver: bridge
