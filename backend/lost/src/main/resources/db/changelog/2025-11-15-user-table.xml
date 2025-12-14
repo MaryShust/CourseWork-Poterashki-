@@ -4,23 +4,21 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.2.xsd">
 
-    <changeSet id="lost-table" author="m.s.taranenko">
+    <changeSet id="user-table" author="m.s.taranenko">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="photo"/>
+                <tableExists tableName="user"/>
             </not>
         </preConditions>
         <sql>
-            CREATE TABLE photo
+            CREATE TABLE user
             (
-                id              BIGSERIAL PRIMARY KEY,
-                entity          TEXT NOT NULL,
-                entityId        BIGINT NOT NULL,
-                bucket          TEXT NOT NULL ,
-                key            TEXT NOT NULL,
-            )
-
-            create index place_entity_entityId_idx on place(entity, entityId)
+                id       UUID PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                username VARCHAR(50) NOT NULL,
+                email    VARCHAR(50) NOT NULL,
+                data     JSONB DEFAULT NULL
+            );
+            CREATE INDEX user_id_idx ON user(id);
         </sql>
     </changeSet>
 
