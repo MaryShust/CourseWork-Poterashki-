@@ -1,6 +1,7 @@
 package com.maxim.poteryashki.lost.adapter.db
 
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Version
 import org.springframework.data.elasticsearch.annotations.DateFormat
 import org.springframework.data.elasticsearch.annotations.Document
 import org.springframework.data.elasticsearch.annotations.Field
@@ -10,7 +11,7 @@ import java.util.UUID
 
 
 @Document(indexName = "entries")
-data class Thing(
+data class ThingEntity(
     @Id
     var id: String?,
 
@@ -44,6 +45,14 @@ data class Thing(
 
     @Field(type = FieldType.Date, format = [DateFormat.date_time])
     val completedAt: Instant?,
+
+    /**
+     * ElasticSearch не поддерживает ACID и транзакции
+     *
+     * Версионирование - единсвенный способ обеспечить +- согласованность
+     */
+    @Version
+    var version: Long? = null
 )
 
 data class Place(

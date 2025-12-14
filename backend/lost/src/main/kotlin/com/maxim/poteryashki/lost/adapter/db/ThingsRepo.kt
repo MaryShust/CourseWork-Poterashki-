@@ -21,15 +21,15 @@ data class ThingFilter(
 )
 
 interface ThingRepository {
-    fun findAllBy(filter: ThingFilter, pageable: Pageable): List<Thing>
+    fun findAllBy(filter: ThingFilter, pageable: Pageable): List<ThingEntity>
 
-    fun findAllByOwner(owner: UUID, pageable: Pageable): List<Thing>
+    fun findAllByOwner(owner: UUID, pageable: Pageable): List<ThingEntity>
 
-    fun create(thing: Thing)
+    fun create(thingEntity: ThingEntity): ThingEntity
 
-    fun update(thing: Thing)
+    fun update(thingEntity: ThingEntity): ThingEntity
 
-    fun getById(id: String): Thing?
+    fun getById(id: String): ThingEntity?
 
     fun existsById(id: String): Boolean
 
@@ -43,7 +43,7 @@ class ThingRepositoryImpl(
     /**
      * Поиск вещей по всем указаным параметрам
      */
-    override fun findAllBy(filter: ThingFilter, pageable: Pageable): List<Thing> {
+    override fun findAllBy(filter: ThingFilter, pageable: Pageable): List<ThingEntity> {
 
         val typeQuery = queryIfNotNull(filter.type) { type ->
             Q.term {
@@ -83,11 +83,11 @@ class ThingRepositoryImpl(
             .withPageable(pageable)
             .build()
 
-        val hits = operations.search(query, Thing::class.java)
+        val hits = operations.search(query, ThingEntity::class.java)
         return hits.map { it.content }.toList()
     }
 
-    override fun findAllByOwner(owner: UUID, pageable: Pageable): List<Thing> {
+    override fun findAllByOwner(owner: UUID, pageable: Pageable): List<ThingEntity> {
         val esQuery = Q.term {
             it.field("owner.keyword").value(FieldValue.of(owner.toString()))
         }
@@ -96,11 +96,11 @@ class ThingRepositoryImpl(
             .withPageable(pageable)
             .build()
 
-        val hits = operations.search(query, Thing::class.java)
+        val hits = operations.search(query, ThingEntity::class.java)
         return hits.map { it.content }.toList()
     }
 
-    override fun getById(id: String): Thing? {
+    override fun getById(id: String): ThingEntity? {
         val esQuery = Q.term {
             it.field("id.keyword").value(FieldValue.of(id))
         }
@@ -108,17 +108,17 @@ class ThingRepositoryImpl(
             .withQuery(esQuery)
             .build()
 
-        val hits = operations.search(query, Thing::class.java)
+        val hits = operations.search(query, ThingEntity::class.java)
         return hits.map { it.content }.firstOrNull()
     }
 
-    override fun create(thing: Thing) {
-        val toSave = thing.copy(id = null)
-        operations.save(toSave)
+    override fun create(thingEntity: ThingEntity): ThingEntity {
+        val toSave = thingEntity.copy(id = null)
+        return operations.save(toSave)
     }
 
-    override fun update(thing: Thing) {
-        operations.save(thing)
+    override fun update(thingEntity: ThingEntity): ThingEntity {
+        return operations.save(thingEntity)
     }
 
     override fun existsById(id: String): Boolean {

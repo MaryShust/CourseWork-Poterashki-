@@ -36,7 +36,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Thing'
+                  $ref: '#/components/schemas/ThingDto'
         '400':
           description: Неверный запрос
           content:
@@ -71,7 +71,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Thing'
+                  $ref: '#/components/schemas/ThingDto'
         '404':
           description: Пользователь не найден
   /thing/{id}:
@@ -96,7 +96,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Thing'
+                $ref: '#/components/schemas/ThingDto'
         '404':
           description: Вещь не найдена
     post:
@@ -153,7 +153,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Thing'
+                $ref: '#/components/schemas/ThingDto'
         '400':
           description: Ошибка валидации или файла
           content:
@@ -215,6 +215,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Конфликт версий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Ошибка сервера
           content:
@@ -234,14 +240,14 @@ components:
         - description
       properties:
         type:
-          $ref: '#/components/schemas/ThingType'
+          $ref: '#/components/schemas/ThingTypeDto'
         date:
           type: string
           format: date-time
           description: Дата потери (для LOST) или обнаружения (для FOUND)
           example: "2023-10-04T10:15:00Z"
         place:
-          $ref: '#/components/schemas/Place'
+          $ref: '#/components/schemas/PlaceDto'
         description:
           type: string
           description: Описание вещи
@@ -250,14 +256,14 @@ components:
       type: object
       properties:
         type:
-          $ref: '#/components/schemas/ThingType'
+          $ref: '#/components/schemas/ThingTypeDto'
         date:
           type: string
           format: date-time
           description: Дата потери (для LOST) или обнаружения (для FOUND)
           example: "2023-10-04T10:15:00Z"
         place:
-          $ref: '#/components/schemas/Place'
+          $ref: '#/components/schemas/PlaceDto'
         description:
           type: string
           description: Описание вещи
@@ -267,7 +273,7 @@ components:
           description: Статус завершенности
           example: false
 
-    Thing:
+    ThingDto:
       type: object
       required:
         - owner
@@ -288,7 +294,7 @@ components:
           description: Идентификатор владельца
           example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
         type:
-          $ref: '#/components/schemas/ThingType'
+          $ref: '#/components/schemas/ThingTypeDto'
         createdAt:
           type: string
           format: date-time
@@ -300,7 +306,7 @@ components:
           description: Дата потери (для LOST) или обнаружения (для FOUND)
           example: "2023-10-04T10:15:00Z"
         place:
-          $ref: '#/components/schemas/Place'
+          $ref: '#/components/schemas/PlaceDto'
         description:
           type: string
           description: Описание вещи
@@ -320,15 +326,20 @@ components:
           nullable: true
           description: Дата завершения (например, возврат вещи)
           example: "2023-10-06T14:00:00Z"
+        version:
+          type: integer
+          format: int64
+          description: Версия записи (для обеспечения согласованности)
+          example: 1
 
-    ThingType:
+    ThingTypeDto:
       type: string
       enum:
         - LOST
         - FOUND
       description: Тип вещи — потерянная или найденная
 
-    Place:
+    PlaceDto:
       type: object
       required:
         - city
@@ -373,13 +384,13 @@ components:
           format: uuid
           example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
         type:
-          $ref: '#/components/schemas/ThingType'
+          $ref: '#/components/schemas/ThingTypeDto'
         date:
           type: string
           format: date-time
           example: "2023-10-04T10:15:00Z"
         place:
-          $ref: '#/components/schemas/Place'
+          $ref: '#/components/schemas/PlaceDto'
         description:
           type: string
           example: "Черный рюкзак с логотипом университета"
@@ -404,7 +415,7 @@ components:
           format: date-time
           example: "2023-10-04T11:00:00Z"
         place:
-          $ref: '#/components/schemas/Place'
+          $ref: '#/components/schemas/PlaceDto'
         description:
           type: string
           example: "Черный рюкзак, внутри учебники"
