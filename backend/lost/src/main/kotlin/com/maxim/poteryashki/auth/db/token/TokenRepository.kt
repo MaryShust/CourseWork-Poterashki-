@@ -1,5 +1,6 @@
 package com.maxim.poteryashki.auth.db.token
 
+import org.springframework.data.jdbc.repository.query.Modifying
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
@@ -18,6 +19,7 @@ interface TokenRepository : CrudRepository<TokenDb, String> {
     @Query("UPDATE token SET expires = NOW() WHERE token = :token")
     fun expireToken(token: String)
 
+    @Modifying
     @Query(
         """INSERT INTO token (token, user_id, expires) 
             VALUES (:token, :userId, :expires) 

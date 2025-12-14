@@ -2,8 +2,11 @@ package com.maxim.poteryashki.auth.service
 
 import com.maxim.poteryashki.auth.db.token.TokenDao
 import com.maxim.poteryashki.auth.db.user.UserDao
+import com.maxim.poteryashki.auth.domain.Token
+import com.maxim.poteryashki.auth.domain.User
 import org.springframework.stereotype.Component
 import java.security.SecureRandom
+import java.time.LocalDateTime
 import java.util.Random
 import java.util.UUID
 import kotlin.random.asKotlinRandom
@@ -14,14 +17,29 @@ class TokenService(
     private val userDao: UserDao
 ) {
 
-    fun getUserByToken(token: String) =
-        tokenDao.getByToken(token)
-            ?.takeIf { !it.isExpired() }
-            ?.let { userDao.getById(it.userId) }
+    private fun String.extractToken() = this.removePrefix("Bearer ").trim()
+
+    fun getUserByHeader(header: String): User? {
+        val token = tokenDao.getByToken(header.extractToken())
+
+        if (token == null || token.isExpired()){
+            return null
+        }
+
+        return userDao.getById(token.userId)
+    }
 
     fun generateToken(userId: UUID): String {
         val random = SecureRandom(userId.toString().toByteArray())
-        return random.generateSecureRandomString()
+        val token = random.generateSecureRandomString()
+        tokenDao.save(
+            Token(
+                content = token,
+                userId = userId,
+                expires = LocalDateTime.now().plusDays(1)
+            )
+        )
+        return token
     }
 
     fun Random.generateSecureRandomString(length: Int = 10): String {

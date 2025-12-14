@@ -2,7 +2,6 @@ package com.maxim.poteryashki.lost.controller
 
 import com.maxim.poteryashki.auth.service.TokenService
 import com.maxim.poteryashki.lost.api.DefaultApiDelegate
-import com.maxim.poteryashki.lost.domain.Thing
 import com.maxim.poteryashki.lost.domain.exception.ForbiddenModification
 import com.maxim.poteryashki.lost.domain.exception.ThingNotFoundException
 import com.maxim.poteryashki.lost.domain.exception.ThingVersionMismatchException
@@ -12,14 +11,16 @@ import com.maxim.poteryashki.lost.dto.ThingCreateDto
 import com.maxim.poteryashki.lost.dto.ThingGetDto
 import com.maxim.poteryashki.lost.service.ThingFinder
 import com.maxim.poteryashki.lost.service.ThingRegistry
+import org.slf4j.LoggerFactory
 import org.springframework.core.io.Resource
-import org.springframework.data.domain.Pageable
 import org.springframework.http.HttpStatus
 import org.springframework.util.StringUtils
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.ExceptionHandler
 import java.util.UUID
+
+private val logger = LoggerFactory.getLogger(DefaultControllerDelegateImpl::class.java)
 
 @Component
 class DefaultControllerDelegateImpl(
@@ -31,9 +32,10 @@ class DefaultControllerDelegateImpl(
         authorization: String,
         thingCreateDto: ThingCreateDto
     ): ResponseEntity<ThingDto> {
-        val user = tokenService.getUserByToken(authorization)
+        val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
+            logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -52,9 +54,10 @@ class DefaultControllerDelegateImpl(
         id: String,
         authorization: String
     ): ResponseEntity<ThingDto> {
-        val user = tokenService.getUserByToken(authorization)
+        val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
+            logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -69,9 +72,10 @@ class DefaultControllerDelegateImpl(
         size: Int,
         sort: List<String>?
     ): ResponseEntity<List<ThingDto>> {
-        val user = tokenService.getUserByToken(authorization)
+        val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
+            logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -91,9 +95,10 @@ class DefaultControllerDelegateImpl(
         size: Int,
         sort: List<String>?
     ): ResponseEntity<List<ThingDto>> {
-        val user = tokenService.getUserByToken(authorization)
+        val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
+            logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -115,9 +120,10 @@ class DefaultControllerDelegateImpl(
         thingDto: ThingDto
     ): ResponseEntity<Unit> {
 
-        val user = tokenService.getUserByToken(authorization)
+        val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
+            logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
         val toUpdate = thingDto.toDomain(id, owner = user.id!!)
@@ -129,9 +135,10 @@ class DefaultControllerDelegateImpl(
 
 
     override fun uploadPhoto(id: String, authorization: String, version: Long, file: Resource?): ResponseEntity<Unit> {
-        val user = tokenService.getUserByToken(authorization)
+        val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
+            logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 

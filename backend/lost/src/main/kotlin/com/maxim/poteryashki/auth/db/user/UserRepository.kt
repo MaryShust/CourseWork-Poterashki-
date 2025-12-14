@@ -10,27 +10,36 @@ import java.util.UUID
 interface UserRepository : CrudRepository<UserDb, UUID> {
 
     @Modifying
-    @Query("""UPDATE users SET 
-        name = :name,
+    @Query(
+        """UPDATE users SET 
+        username = :name,
         password = :password,
-        metadata = :metadata
+        data = :metadata
         WHERE id = :id
-    """)
+    """
+    )
     fun update(id: UUID, name: String, password: String, metadata: String)
 
-    @Modifying
-    @Query(""" INSERT INTO users(name, password, metadata) 
-        VALUES (:name, :password, :metadata) RETURNING id;
-    """)
-    fun create(name: String, password: String, metadata: String): UUID
+    @Query(
+        """
+    INSERT INTO users (username, email, password, data) 
+    VALUES (:name, :email, :password, :metadata) 
+    RETURNING id;
+    """
+    )
+    fun create(name: String, email: String, password: String, metadata: String): UUID
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM users WHERE id = :id
-    """)
+    """
+    )
     fun getUserDbById(id: UUID): UserDb?
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM users WHERE email = :email AND password = :password
-    """)
+    """
+    )
     fun getByEmailAndPassword(email: String, password: String): UserDb?
 }

@@ -15,6 +15,7 @@ class UserDao(
     fun create(user: User): UUID = userRepository
         .create(
             user.name,
+            user.email,
             user.password,
             objectMapper.writeValueAsString(user.metadata)
         )
@@ -35,10 +36,10 @@ class UserDao(
 
     private fun UserDb.toDomain() = User(
         id,
-        name,
+        username,
         email,
         password,
-        objectMapper.readValue(metadata, UserMetadata::class.java)
+        objectMapper.readValue(data, UserMetadata::class.java)
     )
 
 

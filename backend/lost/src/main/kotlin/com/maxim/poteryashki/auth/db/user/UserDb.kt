@@ -10,12 +10,15 @@ data class UserDb(
     @Id
     val id: UUID?,
 
-    val name: String,
+    val username: String,
 
     val email: String,
 
     val password: String,
 
-    val metadata: String
+    /**
+     * Метаданные
+     */
+    val data: String
 
 )
