@@ -134,8 +134,8 @@ paths:
         '404':
           description: Вещь не найдена
     post:
-      summary: Обновить статус вещи
-      operationId: updateThingStatus
+      summary: Обновить вещь
+      operationId: updateThing
       parameters:
         - in: path
           name: id
@@ -153,7 +153,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ThingGetDto'
+              $ref: '#/components/schemas/ThingDto'
       responses:
         '200':
           description: Успешно обновлен

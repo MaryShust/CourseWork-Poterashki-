@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort
 import java.net.URI
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.UUID
 
 fun createPageable(page: Int = 0, size: Int = 20, sort: List<String>? = null): Pageable {
     var pageable = PageRequest.of(page, size)
@@ -74,6 +75,20 @@ fun Thing.toDto() =
         createdAt = this.createdAt.toOffsetDateTime(),
         completedAt = this.completedAt?.toOffsetDateTime(),
         version = this.version,
+    )
+
+fun ThingDto.toDomain(id: String, owner: UUID) =
+    Thing(
+        id = id,
+        owner = owner,
+        type = this.type.toDomain(),
+        createdAt = createdAt?.toInstant() ?: Instant.now(),
+        date = date.toInstant(),
+        place = place.toDomain(),
+        description = description,
+        photos = photos.map { it.toString() },
+        completedAt = completedAt?.toInstant(),
+        version = version,
     )
 
 fun Instant.toOffsetDateTime() =

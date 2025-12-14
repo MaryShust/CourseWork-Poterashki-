@@ -47,13 +47,13 @@ class ThingRegistry(
         return thingDao.create(toSave)
     }
 
-    fun update(thing: Thing, owner: UUID) {
+    fun update(thing: Thing, actor: UUID) {
         val existing = thingDao.getById(thing.id!!)
 
         if (existing == null) {
             throw ThingNotFoundException(thing.id)
         }
-        if (existing.owner != owner) {
+        if (existing.owner != actor) {
             throw ThingNotFoundException(thing.id)
         }
         if (existing.version != thing.version) {

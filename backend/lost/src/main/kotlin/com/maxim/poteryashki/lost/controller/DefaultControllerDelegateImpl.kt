@@ -1,5 +1,6 @@
 package com.maxim.poteryashki.lost.controller
 
+import com.maxim.poteryashki.auth.service.TokenService
 import com.maxim.poteryashki.lost.api.DefaultApiDelegate
 import com.maxim.poteryashki.lost.domain.Thing
 import com.maxim.poteryashki.lost.domain.exception.ForbiddenModification
@@ -13,6 +14,7 @@ import com.maxim.poteryashki.lost.service.ThingFinder
 import com.maxim.poteryashki.lost.service.ThingRegistry
 import org.springframework.core.io.Resource
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.util.StringUtils
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
@@ -23,13 +25,17 @@ import java.util.UUID
 class DefaultControllerDelegateImpl(
     private val thingRegistry: ThingRegistry,
     private val thingFinder: ThingFinder,
+    private val tokenService: TokenService,
 ) : DefaultApiDelegate {
     override fun createThing(
         authorization: String,
         thingCreateDto: ThingCreateDto
     ): ResponseEntity<ThingDto> {
-        //TODO add owner
+        val user = tokenService.getUserByToken(authorization)
 
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
 
         val created = thingRegistry.create(
             type = thingCreateDto.type.toDomain(),
@@ -46,6 +52,12 @@ class DefaultControllerDelegateImpl(
         id: String,
         authorization: String
     ): ResponseEntity<ThingDto> {
+        val user = tokenService.getUserByToken(authorization)
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+
         val thing = thingFinder.findById(id)
         return thing?.toDto()?.let { ResponseEntity.ok(it) }
             ?: throw ThingNotFoundException(id)
@@ -57,8 +69,14 @@ class DefaultControllerDelegateImpl(
         size: Int,
         sort: List<String>?
     ): ResponseEntity<List<ThingDto>> {
+        val user = tokenService.getUserByToken(authorization)
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+
         val response = thingFinder.findByOwner(
-            owner = UUID.randomUUID(),
+            owner = user.id!!,
             pageable = createPageable(page, size, sort)
         ).map { it.toDto() }
 
@@ -73,6 +91,12 @@ class DefaultControllerDelegateImpl(
         size: Int,
         sort: List<String>?
     ): ResponseEntity<List<ThingDto>> {
+        val user = tokenService.getUserByToken(authorization)
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+
         val pageable = createPageable(page, size, sort)
         val response = thingFinder.find(
             type = thingGetDto.type?.toDomain(),
@@ -85,16 +109,38 @@ class DefaultControllerDelegateImpl(
         return ResponseEntity.ok(response.map { it.toDto() })
     }
 
-    override fun updateThingStatus(
+    override fun updateThing(
         id: String,
         authorization: String,
-        thingGetDto: ThingGetDto
+        thingDto: ThingDto
     ): ResponseEntity<Unit> {
-        TODO("Not yet implemented")
-        // Подумать нужен ли он
+
+        val user = tokenService.getUserByToken(authorization)
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+        val toUpdate = thingDto.toDomain(id, owner = user.id!!)
+
+        thingRegistry.update(toUpdate, user.id)
+
+        return ResponseEntity.ok().build()
     }
 
+
     override fun uploadPhoto(id: String, authorization: String, version: Long, file: Resource?): ResponseEntity<Unit> {
+        val user = tokenService.getUserByToken(authorization)
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+
+        val thing = thingFinder.findById(id)
+
+        if (thing?.owner != user.id) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+
         if (file == null) {
             throw IllegalArgumentException("File is null")
         }
