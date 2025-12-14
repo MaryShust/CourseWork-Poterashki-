@@ -11,14 +11,14 @@
             </not>
         </preConditions>
         <sql>
-            CREATE TABLE user
+            CREATE TABLE users
             (
-                id       UUID PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 username VARCHAR(50) NOT NULL,
                 email    VARCHAR(50) NOT NULL,
                 data     JSONB DEFAULT NULL
             );
-            CREATE INDEX user_id_idx ON user(id);
+            CREATE INDEX user_id_idx ON users(id);
         </sql>
     </changeSet>
 

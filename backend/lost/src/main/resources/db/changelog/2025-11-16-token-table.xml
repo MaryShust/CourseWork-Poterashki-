@@ -14,7 +14,7 @@
             CREATE TABLE token
             (
                 token   TEXT PRIMARY KEY,
-                user_id UUID NOT NULL REFERENCES user (id),
+                user_id UUID NOT NULL REFERENCES users (id),
                 expires TIMESTAMP NOT NULL
             );
         </sql>

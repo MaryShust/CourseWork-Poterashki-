@@ -14,7 +14,7 @@
             CREATE TABLE contact
             (
                 id      BIGSERIAL PRIMARY KEY,
-                user_id UUID REFERENCES user(id),
+                user_id UUID REFERENCES users(id),
                 data    JSONB DEFAULT null
             );
 

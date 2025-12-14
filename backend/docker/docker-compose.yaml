@@ -1,24 +1,19 @@
 services:
-#  db:
-#    image: postgres:15-alpine
-#    env_file:
-#      - ./env/user.env
-#    environment:
-#      # Админские креды
-#      POSTGRES_USER: ${DB_USER}
-#      POSTGRES_PASSWORD: ${DB_PASSWORD}
-#
-#      POSTGRES_DB: postgres
-#
-#      DB_NAMES: ${DB_NAMES}  # например: app_a,app_b,service_c
-#    volumes:
-#      - db_data:/var/lib/postgresql/data
-#    healthcheck:
-#      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d postgres"]
-#      interval: 5s
-#      timeout: 5s
-#      retries: 10
-#    restart: unless-stopped
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user} -d mydatabase"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
     container_name: elasticsearch

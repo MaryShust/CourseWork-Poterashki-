@@ -1,6 +1,13 @@
 spring:
   application:
     name: gateway
+  liquibase:
+    change-log: classpath:db/changelog-master.xml
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydatabase
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
 
   elasticsearch:
     rest:
