@@ -32,7 +32,7 @@ kotlin {
 }
 
 application {
-    mainClass.set("com.maxim.poteryashki.lost.LostApplicationKt")
+    mainClass.set("com.maxim.poteryashki.LostApplicationKt")
 }
 
 dependencies {

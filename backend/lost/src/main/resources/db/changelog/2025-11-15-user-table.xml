@@ -5,11 +5,6 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.2.xsd">
 
     <changeSet id="user-table" author="m.s.taranenko">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="user"/>
-            </not>
-        </preConditions>
         <sql>
             CREATE TABLE users
             (
