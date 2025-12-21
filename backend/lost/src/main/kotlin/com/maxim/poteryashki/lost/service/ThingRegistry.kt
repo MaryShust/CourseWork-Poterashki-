@@ -75,7 +75,9 @@ class ThingRegistry(
             statisticsService.addFee(thing.fee ?: 0, actor)
         }
 
-        thingDao.update(merged)
+        val updated = merged.copy(version = (merged.version ?: 0) + 1)
+
+        thingDao.update(updated)
     }
 
 
