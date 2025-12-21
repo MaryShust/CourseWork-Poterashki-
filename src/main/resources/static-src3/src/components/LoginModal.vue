@@ -160,13 +160,13 @@ export default {
       }
 
       try {
-        const response = await fetch('/auth', {
+        const response = await fetch('/api/public/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userEmail: this.loginData.email,
+            email: this.loginData.email,
             password: this.loginData.password
           })
         })
@@ -178,13 +178,13 @@ export default {
 
         const result = await response.json()
 
-        if (result.id) {
-          localStorage.setItem('currentUser', result.name || this.loginData.email.split('@')[0])
-          localStorage.setItem('currentUserId', result.id)
+        if (result.token) {
+          localStorage.setItem('currentUser', result.username || this.loginData.email.split('@')[0])
+          localStorage.setItem('currentUserId', result.token)
           localStorage.setItem('userEmail', this.loginData.email)
 
           this.$root.$emit('auth-changed')
-          this.$emit('login-success', result.name || this.loginData.email.split('@')[0])
+          this.$emit('login-success', result.username || this.loginData.email.split('@')[0])
         } else {
           throw new Error('Некорректный ответ от сервера')
         }
@@ -238,14 +238,14 @@ export default {
       }
 
       try {
-        const response = await fetch('/registration', {
+        const response = await fetch('api/public/register', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userName: this.registerData.name,
-            userEmail: this.registerData.email,
+            username: this.registerData.name,
+            email: this.registerData.email,
             password: this.registerData.password
           })
         })
@@ -257,13 +257,13 @@ export default {
 
         const result = await response.json()
 
-        if (result.id) {
-          localStorage.setItem('currentUser', result.name || this.loginData.email.split('@')[0])
-          localStorage.setItem('currentUserId', result.id)
-          localStorage.setItem('userEmail', this.loginData.email)
+        if (result.token) {
+          localStorage.setItem('currentUser', this.registerData.name)
+          localStorage.setItem('currentUserId', result.token)
+          localStorage.setItem('userEmail', this.registerData.email)
 
           this.$root.$emit('auth-changed')
-          this.$emit('login-success', result.name || this.loginData.email.split('@')[0])
+          this.$emit('login-success', this.registerData.name)
         } else {
           throw new Error('Некорректный ответ от сервера')
         }
