@@ -42,81 +42,40 @@ export default {
     async loadAllAnnouncements() {
       this.loading = true
       try {
-        const response = await fetch('/announcements/all')
+
+        const requestBody = {
+          place: {
+            city: "Москва"
+          },
+          type: "LOST",
+          date: "2025-12-21T17:44:58.370Z",
+          completed: false
+        }
+
+        const url = `/api/things?page=0&size=10&sort=date,desc`
+        const userId = localStorage.getItem('currentUserId')
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': userId
+          },
+          body: JSON.stringify(requestBody)
+        })
 
         if (response.ok) {
           this.allAnnouncements = await response.json()
-        } else {
-          // Если API нет, используем временные данные
-          await this.loadMockData()
         }
 
         console.log('📋 Загружено всех объявлений:', this.allAnnouncements.length)
       } catch (error) {
         console.error('Ошибка загрузки:', error)
-        // Используем мок данные при ошибке
-        await this.loadMockData()
       } finally {
         this.loading = false
       }
     },
 
-    async loadMockData() {
-      // Временные данные для демонстрации
-      this.allAnnouncements = [
-        {
-          id: '1',
-          title: 'Ключи от квартиры',
-          category: 'KEYS',
-          description: 'Связка ключей с брелоком в виде медведя. Потерял у метро.',
-          city: 'Москва',
-          address: 'м. Проспект Мира',
-          lostDate: '2024-01-15',
-          color: 'Серебристый',
-          reward: 1000,
-          photoUrl: null,
-          userId: 'user1',
-          userName: 'Иван Иванов',
-          createdAt: '2024-01-15T10:30:00',
-          updatedAt: '2024-01-15T10:30:00',
-          isActive: true
-        },
-        {
-          id: '2',
-          title: 'iPhone 13 черный',
-          category: 'ELECTRONICS',
-          description: 'Телефон в черном чехле. Потерял в парке Горького.',
-          city: 'Москва',
-          address: 'Парк Горького',
-          lostDate: '2024-01-14',
-          color: 'Черный',
-          reward: 5000,
-          photoUrl: null,
-          userId: 'user2',
-          userName: 'Мария Петрова',
-          createdAt: '2024-01-14T15:45:00',
-          updatedAt: '2024-01-14T15:45:00',
-          isActive: true
-        },
-        {
-          id: '3',
-          title: 'Красный кошелек',
-          category: 'WALLET',
-          description: 'Кожаный кошелек красного цвета с документами внутри.',
-          city: 'Санкт-Петербург',
-          address: 'Невский проспект',
-          lostDate: '2024-01-13',
-          color: 'Красный',
-          reward: 2000,
-          photoUrl: null,
-          userId: 'user3',
-          userName: 'Алексей Смирнов',
-          createdAt: '2024-01-13T12:20:00',
-          updatedAt: '2024-01-13T12:20:00',
-          isActive: false
-        }
-      ]
-    },
     handleFiltersChanged(filters) {
       this.filters = filters
       console.log('Фильтры изменены:', filters)

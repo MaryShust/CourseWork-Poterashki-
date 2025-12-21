@@ -10,14 +10,6 @@
       </div>
 
       <div class="filter-group">
-        <label>Категория:</label>
-        <select v-model="filters.category" @change="applyFilters">
-          <option value="">Все категории</option>
-          <option v-for="cat in availableCategories" :key="cat" :value="cat">{{ cat }}</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
         <label>Статус:</label>
         <select v-model="filters.status" @change="applyFilters">
           <option value="all">Все</option>

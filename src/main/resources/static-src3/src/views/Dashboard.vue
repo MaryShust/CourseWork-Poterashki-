@@ -31,36 +31,6 @@
           <div v-if="error" class="error-message">{{ error }}</div>
         </div>
 
-        <div class="dashboard-card ads-card">
-          <h3>Мои объявления</h3>
-          <div class="ads-content">
-            <div v-if="loadingResponses" class="loading">Загрузка...</div>
-            <div v-else-if="responsesCount === 0" class="empty-state">
-              <p>У вас пока нет активных объявлений</p>
-              <button class="action-btn primary create-btn" @click="createAnnouncement">
-                Создать первое объявление
-              </button>
-            </div>
-            <div v-else class="responses-state">
-              <div class="responses-info">
-                <div class="responses-count">
-                  <span class="count-number">{{ responsesCount }}</span>
-                  <span class="count-text">
-                    {{ getResponsesText(responsesCount) }} на ваши объявления
-                  </span>
-                </div>
-                <p class="responses-hint">Люди откликнулись на ваши объявления о потерянных вещах</p>
-              </div>
-              <button class="action-btn primary view-btn" @click="viewAnnouncementsWithResponses">
-                Посмотреть объявления с ответами
-              </button>
-              <button class="action-btn gray view-all-btn" @click="viewAllMyAnnouncements">
-                Посмотреть все мои объявления
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div class="dashboard-card actions-card">
           <h3>Быстрые действия</h3>
           <div class="action-buttons">
@@ -94,7 +64,6 @@ export default {
       loading: false,
       loadingResponses: false,
       error: '',
-      responsesCount: 0,
       statistics: {
         activeAnnouncements: 0,
         resolvedAnnouncements: 0,
@@ -106,11 +75,9 @@ export default {
   mounted() {
     this.checkAuth()
     this.loadStatistics()
-    this.loadResponsesCount()
     this.$root.$on('auth-changed', () => {
       this.checkAuth()
       this.loadStatistics()
-      this.loadResponsesCount()
     })
   },
   beforeDestroy() {
@@ -145,36 +112,28 @@ export default {
       this.error = ''
 
       try {
-        const endpoints = [
-          { key: 'activeAnnouncements', url: `/active_announcement?id=${this.currentUserId}` },
-          { key: 'resolvedAnnouncements', url: `/resolved_announcement?id=${this.currentUserId}` },
-          { key: 'totalRemuneration', url: `/total_remuneration?id=${this.currentUserId}` },
-          { key: 'maxRemuneration', url: `/max_remuneration?id=${this.currentUserId}` }
-        ]
-
-        // Выполняем все запросы параллельно
-        const promises = endpoints.map(async endpoint => {
-          console.log(`📤 Запрос на ${endpoint.url}`)
-          const response = await fetch(endpoint.url)
-
-          if (!response.ok) {
-            throw new Error(`Ошибка запроса ${endpoint.url}: ${response.status}`)
-          }
-
-          const data = await response.text()
-          const value = parseInt(data) || 0
-
-          console.log(`📥 Ответ от ${endpoint.url}:`, value)
-          return { key: endpoint.key, value: value }
+        const response = await fetch(`/api/public/my-statistics`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': this.currentUserId
+            }
         })
 
-        // Ждем завершения всех запросов
-        const results = await Promise.all(promises)
+        if (!response.ok) {
+          throw new Error(`Ошибка запроса: ${response.status}`)
+        }
 
-        // Обновляем статистику
-        results.forEach(result => {
-          this.statistics[result.key] = result.value
-        })
+        const data = await response.json()
+        console.log('📥 Получены данные статистики:', data)
+
+        // Маппинг полей из нового формата в старые ключи (если нужно сохранить обратную совместимость)
+        this.statistics = {
+          activeAnnouncements: data.active || 0,
+          resolvedAnnouncements: data.foundTotal || 0,
+          totalRemuneration: data.totalFee || 0,
+          maxRemuneration: data.maxFee || 0
+        }
 
         console.log('✅ Статистика успешно загружена:', this.statistics)
 
@@ -192,41 +151,6 @@ export default {
       } finally {
         this.loading = false
       }
-    },
-
-    async loadResponsesCount() {
-      if (!this.currentUserId) {
-        console.log('⚠️ ID пользователя не найден, пропускаем загрузку откликов')
-        return
-      }
-
-      console.log('📞 Загрузка количества откликов для ID:', this.currentUserId)
-      this.loadingResponses = true
-
-      try {
-        const response = await fetch(`/count_responses?id=${this.currentUserId}`)
-
-        if (!response.ok) {
-          throw new Error(`Ошибка запроса: ${response.status}`)
-        }
-
-        const data = await response.text()
-        this.responsesCount = parseInt(data) || 0
-
-        console.log('✅ Количество откликов:', this.responsesCount)
-
-      } catch (err) {
-        console.error('💥 Ошибка загрузки откликов:', err)
-        this.responsesCount = 0
-      } finally {
-        this.loadingResponses = false
-      }
-    },
-
-    getResponsesText(count) {
-      if (count === 1) return 'отклик'
-      if (count >= 2 && count <= 4) return 'отклика'
-      return 'откликов'
     },
 
     formatCurrency(amount) {
@@ -250,19 +174,6 @@ export default {
     },
 
     setReward() {
-      this.$router.push('/my_announcements')
-    },
-
-    viewAnnouncementsWithResponses() {
-      this.$router.push({
-        path: '/my_announcements',
-        query: {
-          filter: 'has_response'
-        }
-      })
-    },
-
-    viewAllMyAnnouncements() {
       this.$router.push('/my_announcements')
     }
   }

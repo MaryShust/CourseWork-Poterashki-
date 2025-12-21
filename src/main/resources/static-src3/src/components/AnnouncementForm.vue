@@ -481,7 +481,7 @@ export default {
         const userId = localStorage.getItem('currentUserId')
         let version
 
-        // 1. Создаем или обновляем вещь
+        // Создаем или обновляем вещь
         const thingPayload = this.buildThingPayload()
 
         if (this.isEditMode) {
@@ -493,18 +493,13 @@ export default {
           version = result.version
         }
 
-        console.log("TEST")
-        console.log(this.selectedFile)
-        console.log(thingId)
-
-        // 2. Загружаем фото если есть
+        // Загружаем фото если есть
         if (this.selectedFile && thingId) {
           await this.uploadPhoto(userId, thingId, this.selectedFile, version)
         }
 
-        console.log("TEST2")
 
-        // 3. Показываем успешное сообщение
+        // Показываем успешное сообщение
         this.successMessage = this.isEditMode
           ? 'Объявление успешно обновлено!'
           : 'Объявление успешно создано!'
@@ -525,21 +520,11 @@ export default {
     buildThingPayload() {
       const currentDate = new Date().toISOString()
 
-      // Базовые поля для описания
-      let description = this.formData.description
-
-      // Добавляем дополнительные детали в описание
-      const additionalDetails = []
-      if (this.formData.title) additionalDetails.push(`Название: ${this.formData.title}`)
-      if (this.formData.reward > 0) additionalDetails.push(`Вознаграждение: ${this.formData.reward} руб`)
-
-      if (additionalDetails.length > 0) {
-        description = additionalDetails.join('. ') + '. ' + description
-      }
-
       if (this.isEditMode) {
         // Режим редактирования
         return {
+          title: this.formData.title,
+          fee: this.formData.reward,
           owner: this.editingData.owner,
           type: this.formData.type,
           date: new Date(this.formData.date).toISOString(),
@@ -550,7 +535,7 @@ export default {
             placeName: this.formData.place.placeName || '',
             extraDescription: this.formData.place.extraDescription || ''
           },
-          description: description,
+          description: this.formData.description,
           photos: this.existingPhotos,
           id: this.announcementId,
           createdAt: this.editingData.createdAt,
@@ -560,6 +545,8 @@ export default {
       } else {
         // Режим создания
         return {
+          title: this.formData.title,
+          fee: this.formData.reward,
           type: this.formData.type,
           date: new Date(this.formData.date).toISOString(),
           place: {
@@ -569,7 +556,7 @@ export default {
             placeName: this.formData.place.placeName || '',
             extraDescription: this.formData.place.extraDescription || ''
           },
-          description: description
+          description: this.formData.description
         }
       }
     },
@@ -614,8 +601,6 @@ export default {
       const formData = new FormData()
       formData.append('file', file)
 
- console.log("uploadPhoto 1")
-
       const response = await fetch(`/api/thing/${thingId}/upload-photo?version=${version}`, {
         method: 'POST',
         headers: {
@@ -624,14 +609,11 @@ export default {
         body: formData
       })
 
-      console.log("uploadPhoto 2")
-
       if (!response.ok) {
         const errorText = await response.text()
         throw new Error(errorText || 'Ошибка загрузки фото')
       }
 
-      return await response.json()
     },
 
     resetForm() {

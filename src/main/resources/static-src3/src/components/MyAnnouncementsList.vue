@@ -1,7 +1,6 @@
 <template>
   <div class="announcements-list">
     <div v-if="showFilters" class="filters">
-
       <div class="filter-group toggle-filter">
         <label class="toggle-label">
           <input type="checkbox" v-model="filters.hasResponse" @change="applyFilters" class="toggle-input">
@@ -19,24 +18,25 @@
       </div>
 
       <div class="filter-group">
-        <label>Категория:</label>
-        <select v-model="filters.category" @change="applyFilters">
-          <option value="">Все категории</option>
-          <option v-for="cat in availableCategories" :key="cat" :value="cat">{{ cat }}</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
         <label>Статус:</label>
         <select v-model="filters.status" @change="applyFilters">
           <option value="all">Все</option>
           <option value="active">Активные</option>
-          <option value="inactive">Неактивные</option>
+          <option value="inactive">Завершенные</option>
         </select>
       </div>
 
       <div class="filter-group">
-        <label>Дата потери:</label>
+        <label>Тип:</label>
+        <select v-model="filters.type" @change="applyFilters">
+          <option value="all">Все типы</option>
+          <option value="LOST">Потерял</option>
+          <option value="FOUND">Нашел</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Дата:</label>
         <select v-model="filters.dateRange" @change="applyFilters">
           <option value="all">За всё время</option>
           <option value="today">Сегодня</option>
@@ -51,32 +51,34 @@
     </div>
 
     <div class="list-stats" v-if="showStats">
-      <span>Найдено объявлений: {{ filteredAnnouncements.length }}</span>
-      <span v-if="filters.status === 'active'">Активных: {{ activeCount }}</span>
-      <span v-if="filters.status === 'inactive'">Неактивных: {{ inactiveCount }}</span>
-      <span v-if="filters.hasResponse">С ответами: {{ hasResponseCount }}</span>
+      <span>Всего: {{ totalItems }}</span>
+      <span>Активных: {{ activeCount }}</span>
+      <span v-if="filters.type === 'LOST'">Потеряно: {{ lostCount }}</span>
+      <span v-if="filters.type === 'FOUND'">Найдено: {{ foundCount }}</span>
+      <span>Страница: {{ currentPage + 1 }} из {{ totalPages }}</span>
     </div>
 
     <div class="announcements-grid">
-      <div v-if="loading" class="loading">Загрузка объявлений...</div>
+      <div v-if="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Загрузка объявлений...</p>
+      </div>
 
-      <div v-else-if="filteredAnnouncements.length === 0" class="empty-state">
-        <p v-if="filters.hasResponse">😔 Нет объявлений с ответами</p>
-        <p v-else>😔 Объявления не найдены</p>
+      <div v-else-if="announcements.length === 0" class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>Объявления не найдены</p>
+        <p class="hint" v-if="hasActiveFilters">Попробуйте изменить параметры фильтров</p>
+        <p class="hint" v-else>У вас еще нет созданных объявлений</p>
 
-        <p v-if="hasActiveFilters && !filters.hasResponse" class="hint">Попробуйте изменить параметры фильтров</p>
-        <p v-else-if="filters.hasResponse" class="hint">Пока что на ваши объявления никто не откликнулся</p>
-        <p v-else class="hint">У вас еще нет созданных объявлений</p>
-
-        <button v-if="showCreateButton && !filters.hasResponse" class="btn-create" @click="goToCreate">
+        <button v-if="showCreateButton" class="btn-create" @click="goToCreate">
           📝 Создать первое объявление
         </button>
       </div>
 
       <div v-else class="cards-container">
-        <div v-for="announcement in paginatedAnnouncements" :key="announcement.id" class="announcement-card">
-          <div class="card-status" :class="announcement.isActive ? (announcement.isFound ? 'found' : 'active') : 'inactive'">
-            {{ announcement.isActive ? (announcement.isFound ? '🔍 Нашли' : '🔍 Ищут') : '✅ Найдено' }}
+        <div v-for="announcement in announcements" :key="announcement.id" class="announcement-card">
+          <div class="card-status" :class="getStatusClass(announcement)">
+            {{ getStatusText(announcement) }}
           </div>
 
           <div v-if="announcement.responseCount > 0" class="response-badge">
@@ -84,7 +86,10 @@
           </div>
 
           <div class="card-image" @click="viewDetails(announcement.id)">
-            <img v-if="announcement.photoUrl" :src="announcement.photoUrl" :alt="announcement.title">
+            <img v-if="announcement.photos && announcement.photos.length > 0"
+                 :src="getFirstPhoto(announcement)"
+                 :alt="announcement.title"
+                 @error="handleImageError">
             <div v-else class="no-image">
               📷 Нет фото
             </div>
@@ -97,21 +102,23 @@
 
             <div class="card-meta">
               <span class="meta-item">🏙️ {{ announcement.city }}</span>
-              <span v-if="announcement.address" class="meta-item">📍 {{ announcement.address }}</span>
-              <span class="meta-item">📅 {{ formatDate(announcement.lostDate) }}</span>
+              <span v-if="announcement.place?.street" class="meta-item">
+                📍 {{ announcement.place.street }}{{ announcement.place.house ? ', ' + announcement.place.house : '' }}
+              </span>
+              <span class="meta-item">📅 {{ formatDate(announcement.date) }}</span>
               <span v-if="announcement.color" class="meta-item">🎨 {{ announcement.color }}</span>
             </div>
 
             <div class="card-description">
-              {{ truncateText(announcement.description, 100) }}
+              {{ truncateText(announcement.description, 120) }}
             </div>
 
             <div class="card-footer">
               <div class="user-info">
                 <span class="user-name">👤 {{ announcement.userName }}</span>
                 <span class="created-at">Создано: {{ formatDateTime(announcement.createdAt) }}</span>
-                <span v-if="announcement.updatedAt !== announcement.createdAt" class="updated-at">
-                  Обновлено: {{ formatDateTime(announcement.updatedAt) }}
+                <span v-if="announcement.completedAt" class="completed-at">
+                  Завершено: {{ formatDateTime(announcement.completedAt) }}
                 </span>
               </div>
 
@@ -120,12 +127,16 @@
                   💰 {{ formatCurrency(announcement.reward) }}
                 </button>
 
-                <button class="btn-edit" @click="editAnnouncement(announcement.id)">
+                <button v-if="announcement.isActive" class="btn-edit" @click="editAnnouncement(announcement.id)">
                   ✏️ Редактировать
                 </button>
 
                 <button class="btn-view" @click="viewDetails(announcement.id)">
                   👁️ Подробнее
+                </button>
+
+                <button v-if="announcement.isActive" class="btn-complete" @click="completeAnnouncement(announcement.id)">
+                  ✅ Завершить
                 </button>
               </div>
             </div>
@@ -134,10 +145,46 @@
       </div>
     </div>
 
-    <div v-if="showPagination && filteredAnnouncements.length > 0" class="pagination">
-      <button :disabled="currentPage === 1" @click="prevPage">← Назад</button>
-      <span>Страница {{ currentPage }} из {{ totalPages }}</span>
-      <button :disabled="currentPage === totalPages" @click="nextPage">Вперед →</button>
+    <!-- Пагинация -->
+    <div v-if="showPagination && totalPages > 1" class="pagination">
+      <button class="btn-pagination first" @click="goToPage(0)" :disabled="currentPage === 0">
+        « Первая
+      </button>
+
+      <button class="btn-pagination prev" @click="prevPage" :disabled="currentPage === 0">
+        ← Назад
+      </button>
+
+      <div class="page-numbers">
+        <button v-for="page in visiblePages"
+                :key="page"
+                class="page-number"
+                :class="{ active: page === currentPage + 1 }"
+                @click="goToPage(page - 1)">
+          {{ page }}
+        </button>
+
+        <span v-if="hasEllipsis" class="ellipsis">...</span>
+
+        <button v-if="totalPages > 5 && currentPage < totalPages - 2"
+                class="page-number"
+                @click="goToPage(totalPages - 1)">
+          {{ totalPages }}
+        </button>
+      </div>
+
+      <button class="btn-pagination next" @click="nextPage" :disabled="currentPage === totalPages - 1">
+        Вперед →
+      </button>
+
+      <button class="btn-pagination last" @click="goToPage(totalPages - 1)" :disabled="currentPage === totalPages - 1">
+        Последняя »
+      </button>
+
+      <div class="page-info">
+        <span>Страница {{ currentPage + 1 }} из {{ totalPages }}</span>
+        <span>Всего: {{ totalItems }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -170,9 +217,17 @@ export default {
       type: Boolean,
       default: true
     },
-    itemsPerPage: {
+    totalPages: {
       type: Number,
-      default: 12
+      default: 0
+    },
+    currentPage: {
+      type: Number,
+      default: 0
+    },
+    totalItems: {
+      type: Number,
+      default: 0
     },
     initialFilters: {
       type: Object,
@@ -185,28 +240,40 @@ export default {
         city: '',
         category: '',
         status: 'all',
+        type: 'all',
         dateRange: 'all',
         hasResponse: false
-      },
-      currentPage: 1,
-      currentUserId: localStorage.getItem('currentUserId')
+      }
     }
   },
   computed: {
     availableCities() {
       const cities = new Set()
       this.announcements.forEach(item => {
-        if (item.city) cities.add(item.city)
+        if (item.city && item.city !== 'Не указан') {
+          cities.add(item.city)
+        }
       })
       return Array.from(cities).sort()
     },
 
-    availableCategories() {
-      const categories = new Set()
-      this.announcements.forEach(item => {
-        if (item.category) categories.add(item.category)
-      })
-      return Array.from(categories).sort()
+    categoryLabels() {
+      const categories = [
+        { value: '', label: 'Все категории' },
+        { value: 'ELECTRONICS', label: 'Электроника' },
+        { value: 'DOCUMENTS', label: 'Документы' },
+        { value: 'KEYS', label: 'Ключи' },
+        { value: 'WALLET', label: 'Кошелек/Деньги' },
+        { value: 'JEWELRY', label: 'Украшения' },
+        { value: 'CLOTHES', label: 'Одежда' },
+        { value: 'ANIMALS', label: 'Животные' },
+        { value: 'BAGS', label: 'Сумки/Рюкзаки' },
+        { value: 'OTHER', label: 'Другое' }
+      ]
+
+      // Фильтруем только те категории, которые есть в объявлениях
+      const usedCategories = new Set(this.announcements.map(item => item.category))
+      return categories.filter(cat => !cat.value || usedCategories.has(cat.value))
     },
 
     hasActiveFilters() {
@@ -215,76 +282,45 @@ export default {
       )
     },
 
-    hasResponseFilterActive() {
-      return this.filters.hasResponse === true
+    activeCount() {
+      return this.announcements.filter(item => item.isActive).length
     },
 
-    filteredAnnouncements() {
-      let filtered = [...this.announcements]
+    lostCount() {
+      return this.announcements.filter(item => item.type === 'LOST').length
+    },
 
-      if (this.filters.city) {
-        filtered = filtered.filter(item => item.city === this.filters.city)
-      }
+    foundCount() {
+      return this.announcements.filter(item => item.type === 'FOUND').length
+    },
 
-      if (this.filters.category) {
-        filtered = filtered.filter(item => item.category === this.filters.category)
-      }
+    // Вычисляем видимые номера страниц
+    visiblePages() {
+      const pages = []
+      const maxVisible = 5
 
-      if (this.filters.status === 'active') {
-        filtered = filtered.filter(item => item.isActive === true)
-      } else if (this.filters.status === 'inactive') {
-        filtered = filtered.filter(item => item.isActive === false)
-      }
+      if (this.totalPages <= maxVisible) {
+        for (let i = 1; i <= this.totalPages; i++) {
+          pages.push(i)
+        }
+      } else {
+        let start = Math.max(1, this.currentPage + 1 - 2)
+        let end = Math.min(this.totalPages, start + maxVisible - 1)
 
-      if (this.filters.dateRange !== 'all') {
-        const now = new Date()
-        let startDate
-
-        switch (this.filters.dateRange) {
-          case 'today':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-            break
-          case 'week':
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-            break
-          case 'month':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
-            break
+        if (end - start + 1 < maxVisible) {
+          start = Math.max(1, end - maxVisible + 1)
         }
 
-        filtered = filtered.filter(item => {
-          const lostDate = new Date(item.lostDate)
-          return lostDate >= startDate
-        })
+        for (let i = start; i <= end; i++) {
+          pages.push(i)
+        }
       }
 
-      if (this.filters.hasResponse) {
-        filtered = filtered.filter(item => item.responseCount > 0)
-      }
-
-      return filtered
+      return pages
     },
 
-    paginatedAnnouncements() {
-      const start = (this.currentPage - 1) * this.itemsPerPage
-      const end = start + this.itemsPerPage
-      return this.filteredAnnouncements.slice(start, end)
-    },
-
-    totalPages() {
-      return Math.ceil(this.filteredAnnouncements.length / this.itemsPerPage)
-    },
-
-    activeCount() {
-      return this.announcements.filter(item => item.isActive === true).length
-    },
-
-    inactiveCount() {
-      return this.announcements.filter(item => item.isActive === false).length
-    },
-
-    hasResponseCount() {
-      return this.announcements.filter(item => item.responseCount > 0).length
+    hasEllipsis() {
+      return this.totalPages > 5 && this.currentPage + 1 < this.totalPages - 2
     }
   },
   watch: {
@@ -300,15 +336,40 @@ export default {
 
     filters: {
       handler() {
-        this.currentPage = 1
         this.$emit('filters-changed', this.filters)
       },
       deep: true
     }
   },
   methods: {
+    getStatusClass(announcement) {
+      if (!announcement.isActive) return 'completed'
+      return announcement.type === 'FOUND' ? 'found' : 'lost'
+    },
+
+    getStatusText(announcement) {
+      if (!announcement.isActive) return '✅ Завершено'
+      return announcement.type === 'FOUND' ? '🔍 Нашёл' : '😔 Потерял'
+    },
+
+    getFirstPhoto(announcement) {
+      if (!announcement.photos || announcement.photos.length === 0) return ''
+
+      const firstPhoto = announcement.photos[0]
+      // Если фото - это URL или base64
+      if (firstPhoto.startsWith('http') || firstPhoto.startsWith('data:')) {
+        return firstPhoto
+      }
+      // Иначе предполагаем, что это имя файла
+      return `/api/thing/${announcement.id}/photo/${firstPhoto}`
+    },
+
+    handleImageError(event) {
+      event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+PGZvbnQgc2l6ZT0iMTQiPlBob3RvPC9mb250PjwvdGV4dD48L3N2Zz4='
+    },
+
     applyFilters() {
-      this.$emit('filters-applied', this.filters)
+      this.$emit('filters-changed', this.filters)
     },
 
     clearFilters() {
@@ -316,35 +377,66 @@ export default {
         city: '',
         category: '',
         status: 'all',
+        type: 'all',
         dateRange: 'all',
         hasResponse: false
       }
       this.$emit('filters-cleared')
     },
 
+    goToPage(page) {
+      this.$emit('page-changed', page)
+    },
+
     prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--
+      if (this.currentPage > 0) {
+        this.$emit('page-changed', this.currentPage - 1)
       }
     },
 
     nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++
+      if (this.currentPage < this.totalPages - 1) {
+        this.$emit('page-changed', this.currentPage + 1)
       }
     },
 
     viewDetails(id) {
       this.$router.push({
-        path: '/details',
-        query: {
-          id: id
-        }
+        name: 'ThingDetails',
+        params: { id }
       })
     },
 
     editAnnouncement(id) {
       this.$router.push(`/edit/${id}`)
+    },
+
+    async completeAnnouncement(id) {
+      if (confirm('Вы уверены, что хотите завершить это объявление?')) {
+        try {
+          const userId = localStorage.getItem('currentUserId')
+          const response = await fetch(`/api/thing/${id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': userId
+            },
+            body: JSON.stringify({
+              completedAt: new Date().toISOString()
+            })
+          })
+
+          if (response.ok) {
+            alert('Объявление завершено!')
+            this.$emit('announcement-completed', id)
+          } else {
+            throw new Error('Ошибка завершения объявления')
+          }
+        } catch (error) {
+          console.error('Ошибка:', error)
+          alert('Не удалось завершить объявление')
+        }
+      }
     },
 
     goToCreate() {
@@ -504,7 +596,7 @@ export default {
 
 .list-stats {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
   background: white;
@@ -520,6 +612,7 @@ export default {
   background: #f8f9fa;
   border-radius: 4px;
   border: 1px solid #e9ecef;
+  white-space: nowrap;
 }
 
 .announcements-grid {
@@ -530,7 +623,24 @@ export default {
   text-align: center;
   padding: 4rem;
   color: #666;
-  font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #8B5CF6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .empty-state {
@@ -542,6 +652,12 @@ export default {
   align-items: center;
   justify-content: center;
   min-height: 300px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
 }
 
 .empty-state p {
@@ -605,19 +721,19 @@ export default {
   font-weight: 600;
 }
 
-.card-status.active {
-  background: #d4edda;
-  color: #155724;
+.card-status.lost {
+  background: #ffeaa7;
+  color: #856404;
 }
 
 .card-status.found {
-  background: #cce5ff;
-  color: #004085;
+  background: #a3e4d7;
+  color: #0d6251;
 }
 
-.card-status.inactive {
-  background: #fff3cd;
-  color: #856404;
+.card-status.completed {
+  background: #d5dbdb;
+  color: #424949;
 }
 
 .response-badge {
@@ -722,7 +838,7 @@ export default {
   margin-bottom: 0.25rem;
 }
 
-.created-at, .updated-at {
+.created-at, .completed-at {
   display: block;
   font-size: 0.75rem;
 }
@@ -744,13 +860,15 @@ export default {
   cursor: default;
 }
 
-.btn-edit, .btn-view {
+.btn-edit, .btn-view, .btn-complete {
   padding: 0.5rem 0.75rem;
   border: none;
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.3s;
+  flex: 1;
+  min-width: 120px;
 }
 
 .btn-edit {
@@ -771,11 +889,22 @@ export default {
   background: #5a6268;
 }
 
+.btn-complete {
+  background: #20c997;
+  color: white;
+}
+
+.btn-complete:hover {
+  background: #1ba87e;
+}
+
+/* Пагинация */
 .pagination {
   display: flex;
-  justify-content: center;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 2rem;
+  justify-content: center;
+  gap: 0.5rem;
   margin-top: 3rem;
   padding: 1.5rem;
   background: white;
@@ -783,7 +912,7 @@ export default {
   border: 1px solid #e9ecef;
 }
 
-.pagination button {
+.btn-pagination {
   padding: 0.5rem 1rem;
   background: #f8f9fa;
   color: #333;
@@ -791,22 +920,75 @@ export default {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s;
+  font-size: 0.9rem;
+  min-width: 80px;
 }
 
-.pagination button:hover:not(:disabled) {
+.btn-pagination:hover:not(:disabled) {
   background: #8B5CF6;
   color: white;
   border-color: #8B5CF6;
 }
 
-.pagination button:disabled {
+.btn-pagination:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination span {
-  color: #666;
+.btn-pagination.first,
+.btn-pagination.last {
+  min-width: 90px;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0 0.5rem;
+}
+
+.page-number {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s;
   font-size: 0.9rem;
+}
+
+.page-number:hover:not(.active) {
+  background: #f8f9fa;
+  border-color: #8B5CF6;
+}
+
+.page-number.active {
+  background: #8B5CF6;
+  color: white;
+  border-color: #8B5CF6;
+  font-weight: 600;
+}
+
+.ellipsis {
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  color: #666;
+}
+
+.page-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 1rem;
+  font-size: 0.85rem;
+  color: #666;
+  min-width: 150px;
 }
 
 @media (max-width: 768px) {
@@ -837,14 +1019,51 @@ export default {
     gap: 0.5rem;
   }
 
+  .empty-state {
+    padding: 2rem;
+    min-height: 250px;
+  }
+
   .pagination {
     flex-direction: column;
     gap: 1rem;
   }
 
-  .empty-state {
-    padding: 2rem;
-    min-height: 250px;
+  .btn-pagination,
+  .page-number {
+    min-width: auto;
+    flex: 1;
+  }
+
+  .page-numbers {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .page-info {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .btn-edit, .btn-view, .btn-complete {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-numbers {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-pagination.first,
+  .btn-pagination.last {
+    display: none;
   }
 }
 </style>
