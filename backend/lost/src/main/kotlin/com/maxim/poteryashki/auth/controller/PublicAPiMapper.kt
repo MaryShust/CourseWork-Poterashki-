@@ -18,5 +18,7 @@ fun User.toProfileResponse(): GetProfileResponse =
 fun Statistics.toStatisticsResponse(): GetStatisticsResponse =
     GetStatisticsResponse(
         active = this.active,
-        foundTotal = totalFound
+        foundTotal = totalFound,
+        totalFee = totalFee,
+        maxFee = maxFee
     )

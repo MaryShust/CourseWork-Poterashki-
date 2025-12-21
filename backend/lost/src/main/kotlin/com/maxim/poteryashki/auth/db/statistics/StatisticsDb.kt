@@ -7,5 +7,7 @@ import java.util.UUID
 data class StatisticsDb (
     val userId: UUID,
     val active: Int,
-    val totalFound: Int
+    val totalFound: Int,
+    val totalFee: Int,
+    val maxFee: Int
 )

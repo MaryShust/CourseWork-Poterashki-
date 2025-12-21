@@ -273,6 +273,8 @@ components:
       required:
         - active
         - foundTotal
+        - totalFee
+        - maxFee
       properties:
         active:
           type: integer
@@ -282,6 +284,12 @@ components:
           type: integer
           example: 20
           description: Общее количество найденных объявлений
+        totalFee:
+          type: integer
+          example: 20
+        maxFee:
+          type: integer
+          example: 20
     GetProfileResponse:
       type: object
       required:

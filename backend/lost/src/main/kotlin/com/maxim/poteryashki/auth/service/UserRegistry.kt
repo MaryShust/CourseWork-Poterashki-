@@ -35,7 +35,7 @@ class UserRegistry(
             metadata = null
         ))
 
-        statisticsDao.save(Statistics(0, 0), userId)
+        statisticsDao.save(Statistics(0, 0, 0, 0), userId)
 
         return userId
     }

@@ -72,6 +72,7 @@ class ThingRegistry(
         if (existing.completedAt == null && thing.completedAt != null && thing.type == ThingType.LOST) {
             statisticsService.incrementFound(actor)
             statisticsService.decrementActive(actor)
+            statisticsService.addFee(thing.fee ?: 0, actor)
         }
 
         thingDao.update(merged)

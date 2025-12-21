@@ -14,7 +14,7 @@ interface StatisticsRepo: CrudRepository<StatisticsDb, UUID> {
     fun getByUserId(userId: UUID): StatisticsDb?
 
     @Modifying
-    @Query("INSERT INTO statistics (user_id, active, total_found) VALUES (:userId, :active, :totalFound)")
-    fun upsert(userId: UUID, active: Int, totalFound: Int)
+    @Query("INSERT INTO statistics (user_id, active, total_found, total_fee, max_fee) VALUES (:userId, :active, :totalFound, :totalFee, :maxFee)")
+    fun upsert(userId: UUID, active: Int, totalFound: Int, totalFee: Int, maxFee: Int)
 
 }

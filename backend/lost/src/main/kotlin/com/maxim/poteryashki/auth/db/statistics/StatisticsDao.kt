@@ -14,14 +14,19 @@ class StatisticsDao(
     }
 
     fun save(statistics: Statistics, userId: UUID) {
-        statisticsRepo.upsert(userId, statistics.active, statistics.totalFound)
+        statisticsRepo.upsert(
+            userId, statistics.active, statistics.totalFound,
+            statistics.totalFee, statistics.maxFee
+        )
     }
 }
 
 fun StatisticsDb.toDomain(): Statistics {
     return Statistics(
         active = active,
-        totalFound = totalFound
+        totalFound = totalFound,
+        totalFee = totalFee,
+        maxFee = maxFee
     )
 }
 
@@ -29,6 +34,8 @@ fun Statistics.toDb(userId: UUID): StatisticsDb {
     return StatisticsDb(
         userId = userId,
         active = active,
-        totalFound = totalFound
+        totalFound = totalFound,
+        totalFee = totalFee,
+        maxFee = maxFee
     )
 }

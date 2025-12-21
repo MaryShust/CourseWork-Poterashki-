@@ -5,6 +5,7 @@ import com.maxim.poteryashki.auth.domain.Statistics
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
+import kotlin.math.max
 
 @Service
 class StatisticsService(
@@ -23,10 +24,7 @@ class StatisticsService(
         }
 
         statisticsDao.save(
-            Statistics(
-                active = before.active + 1,
-                totalFound = before.totalFound
-            ),
+            before.copy(active = before.active + 1),
             userId
         )
     }
@@ -39,10 +37,7 @@ class StatisticsService(
         }
 
         statisticsDao.save(
-            Statistics(
-                active = before.active - 1,
-                totalFound = before.totalFound
-            ),
+            before.copy(active = before.active - 1),
             userId
         )
     }
@@ -55,9 +50,22 @@ class StatisticsService(
         }
 
         statisticsDao.save(
-            Statistics(
-                active = before.active,
-                totalFound = before.totalFound + 1
+            before.copy(totalFound = before.totalFound + 1),
+            userId
+        )
+    }
+
+    @Transactional
+    fun addFee(fee: Int, userId: UUID) {
+        val before = statisticsDao.getStatistics(userId)
+        if (before == null) {
+            throw IllegalArgumentException("User not found")
+        }
+
+        statisticsDao.save(
+            before.copy(
+                totalFee = before.totalFee + fee,
+                maxFee = max(before.maxFee, fee)
             ),
             userId
         )
