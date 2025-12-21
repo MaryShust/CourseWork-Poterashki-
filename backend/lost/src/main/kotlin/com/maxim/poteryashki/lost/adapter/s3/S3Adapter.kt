@@ -91,6 +91,7 @@ class S3Adapter(
             GetPresignedObjectUrlArgs.builder()
                 .bucket(minioBucket)
                 .`object`(fileName)
+                .method(io.minio.http.Method.GET)
                 .build()
         )
 

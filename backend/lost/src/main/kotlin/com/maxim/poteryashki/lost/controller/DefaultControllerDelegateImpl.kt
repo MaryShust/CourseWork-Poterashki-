@@ -180,7 +180,7 @@ class DefaultControllerDelegateImpl(
             throw IllegalArgumentException("File encoding is null")
         }
 
-        thingRegistry.addImage(id, version, file.contentAsByteArray, fileEncoding)
+        val entity = thingRegistry.addImage(id, version, file.contentAsByteArray, fileEncoding)
         return ResponseEntity.ok().build()
     }
 

@@ -91,10 +91,6 @@ class ThingRegistry(
             throw ThingNotFoundException(thingId)
         }
 
-        if (existing.version != thingVersion) {
-            throw ThingVersionMismatchException(thingVersion, existing.version)
-        }
-
         try {
             val imageName = "${existing.id}/${existing.photos.size + 1}.$fileEncoding"
             val link = s3Adapter.uploadPhoto(image, imageName)
@@ -102,7 +98,7 @@ class ThingRegistry(
                 photos = existing.photos + link
             )
             val afterMerge = thingMergeService.mergeResponses(existing, updated)
-            return thingDao.update(afterMerge)
+            return thingDao.update(afterMerge.copy(version = (afterMerge.version ?: 0) + 1))
         } catch (e: Exception) {
             logger.error("Failed to upload image", e)
             throw RuntimeException("Failed to upload image", e)
