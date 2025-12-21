@@ -47,7 +47,7 @@ class DefaultControllerDelegateImpl(
             date = thingCreateDto.date.toInstant(),
             description = thingCreateDto.description,
             place = thingCreateDto.place.toDomain(),
-            owner = UUID.randomUUID()
+            owner = user.id!!
         )
 
         return ResponseEntity.ok(created.toDto(emptyList()))
