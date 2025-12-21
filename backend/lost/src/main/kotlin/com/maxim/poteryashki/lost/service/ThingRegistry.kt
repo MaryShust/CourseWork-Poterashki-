@@ -23,7 +23,8 @@ private val logger = LoggerFactory.getLogger(ThingRegistry::class.java)
 class ThingRegistry(
     private val thingDao: ThingDao,
     private val s3Adapter: S3Adapter,
-    private val statisticsService: StatisticsService
+    private val statisticsService: StatisticsService,
+    private val thingMergeService: ThingMergeService
 ) {
 
     fun create(
@@ -45,6 +46,7 @@ class ThingRegistry(
             place = place,
             description = description,
             photos = emptyList(),
+            responses = null,
             completedAt = null,
         )
 
@@ -62,16 +64,15 @@ class ThingRegistry(
         if (existing.owner != actor) {
             throw ThingNotFoundException(thing.id)
         }
-        if (existing.version != thing.version) {
-            throw ThingVersionMismatchException(thing.version, existing.version)
-        }
+
+        val merged = thingMergeService.mergeResponses(existing, thing)
 
         if (existing.completedAt == null && thing.completedAt != null && thing.type == ThingType.LOST) {
             statisticsService.incrementFound(actor)
             statisticsService.decrementActive(actor)
         }
-        thingDao.update(thing)
 
+        thingDao.update(merged)
     }
 
 
@@ -97,11 +98,29 @@ class ThingRegistry(
             val updated = existing.copy(
                 photos = existing.photos + link
             )
-            return thingDao.update(updated)
+            val afterMerge = thingMergeService.mergeResponses(existing, updated)
+            return thingDao.update(afterMerge)
         } catch (e: Exception) {
             logger.error("Failed to upload image", e)
             throw RuntimeException("Failed to upload image", e)
         }
+    }
+
+    fun addResponse(
+        thingId: String,
+        userId: UUID
+    ) {
+        val existing = thingDao.getById(thingId)
+
+        if (existing == null) {
+            throw ThingNotFoundException(thingId)
+        }
+
+        val existingResponses = existing.responses ?: mutableListOf()
+
+        val updated = existingResponses + userId
+
+        thingDao.update(existing.copy(responses = updated))
     }
 
 }

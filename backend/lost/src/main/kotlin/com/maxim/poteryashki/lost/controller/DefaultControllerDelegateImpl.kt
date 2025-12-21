@@ -2,6 +2,7 @@ package com.maxim.poteryashki.lost.controller
 
 import com.maxim.poteryashki.auth.service.TokenService
 import com.maxim.poteryashki.lost.api.DefaultApiDelegate
+import com.maxim.poteryashki.lost.domain.Thing
 import com.maxim.poteryashki.lost.domain.exception.ForbiddenModification
 import com.maxim.poteryashki.lost.domain.exception.ThingNotFoundException
 import com.maxim.poteryashki.lost.domain.exception.ThingVersionMismatchException
@@ -48,7 +49,7 @@ class DefaultControllerDelegateImpl(
             owner = UUID.randomUUID()
         )
 
-        return ResponseEntity.ok(created.toDto())
+        return ResponseEntity.ok(created.toDto(emptyList()))
     }
 
     override fun getThingById(
@@ -57,14 +58,16 @@ class DefaultControllerDelegateImpl(
     ): ResponseEntity<ThingDto> {
         val user = tokenService.getUserByHeader(authorization)
 
-        if (user == null) {
+        if (user == null || user.id == null) {
             logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
-        val thing = thingFinder.findById(id)
-        return thing?.toDto()?.let { ResponseEntity.ok(it) }
-            ?: throw ThingNotFoundException(id)
+        val thing = thingFinder.findById(id, user.id) ?: throw ThingNotFoundException(id)
+
+        val updated = convertToDto(thing)
+
+        return ResponseEntity.ok(updated)
     }
 
     override fun getThingByOwner(
@@ -83,7 +86,7 @@ class DefaultControllerDelegateImpl(
         val response = thingFinder.findByOwner(
             owner = user.id!!,
             pageable = createPageable(page, size, sort)
-        ).map { it.toDto() }
+        ).map { convertToDto(it) }
 
         return ResponseEntity.ok(response)
     }
@@ -98,21 +101,38 @@ class DefaultControllerDelegateImpl(
     ): ResponseEntity<List<ThingDto>> {
         val user = tokenService.getUserByHeader(authorization)
 
-        if (user == null) {
+        if (user == null || user.id == null) {
             logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
         val pageable = createPageable(page, size, sort)
         val response = thingFinder.find(
+            userId = user.id,
             type = thingGetDto.type?.toDomain(),
             date = thingGetDto.date?.toInstant(),
             place = thingGetDto.place.toDomain(),
             description = thingGetDto.description,
             pageable = pageable
-        )
+        ).map { convertToDto(it) }
 
-        return ResponseEntity.ok(response.map { it.toDto() })
+        return ResponseEntity.ok(response)
+    }
+
+    override fun responseToThing(
+        id: String,
+        authorization: String
+    ): ResponseEntity<Unit> {
+        val user = tokenService.getUserByHeader(authorization)
+
+        if (user == null || user.id == null) {
+            logger.debug("User not found for token: $authorization")
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+
+        thingRegistry.addResponse(id, user.id)
+
+        return ResponseEntity.ok().build()
     }
 
     override fun updateThing(
@@ -138,12 +158,12 @@ class DefaultControllerDelegateImpl(
     override fun uploadPhoto(id: String, authorization: String, version: Long, file: Resource?): ResponseEntity<Unit> {
         val user = tokenService.getUserByHeader(authorization)
 
-        if (user == null) {
+        if (user == null || user.id == null) {
             logger.debug("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
-        val thing = thingFinder.findById(id)
+        val thing = thingFinder.findById(id, user.id)
 
         if (thing?.owner != user.id) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
@@ -162,7 +182,6 @@ class DefaultControllerDelegateImpl(
         thingRegistry.addImage(id, version, file.contentAsByteArray, fileEncoding)
         return ResponseEntity.ok().build()
     }
-
 
     @ExceptionHandler(ForbiddenModification::class)
     fun handleForbiddenModification(e: ForbiddenModification): ResponseEntity<ErrorResponse?> {
@@ -192,5 +211,12 @@ class DefaultControllerDelegateImpl(
     fun handleException(e: Exception): ResponseEntity<ErrorResponse?> {
         logger.error("Exception: ",e)
         return ResponseEntity.internalServerError().body(e.toResponse())
+    }
+
+    private fun convertToDto(thing: Thing): ThingDto {
+        val phoneNumbers = thing.responses
+            ?.mapNotNull { tokenService.getPhoneNumberById(it) }
+
+        return thing.toDto(phoneNumbers ?: emptyList())
     }
 }

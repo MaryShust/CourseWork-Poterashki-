@@ -63,7 +63,7 @@ fun Place.toDto() =
         extraDescription = this.extraDescription,
     )
 
-fun Thing.toDto() =
+fun Thing.toDto(phoneNumbers: List<String>) =
     ThingDto(
         id = this.id,
         description = this.description,
@@ -72,6 +72,7 @@ fun Thing.toDto() =
         owner = this.owner,
         date = this.date.toOffsetDateTime(),
         photos = this.photos.map { it.toUri() },
+        responses = phoneNumbers,
         createdAt = this.createdAt.toOffsetDateTime(),
         completedAt = this.completedAt?.toOffsetDateTime(),
         title = title,
@@ -90,6 +91,7 @@ fun ThingDto.toDomain(id: String, owner: UUID) =
         photos = photos.map { it.toString() },
         completedAt = completedAt?.toInstant(),
         title = title,
+        responses = null,
         version = version,
     )
 

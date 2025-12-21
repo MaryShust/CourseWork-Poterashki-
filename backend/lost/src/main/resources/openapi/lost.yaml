@@ -261,6 +261,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /thing/{id}/reponse:
+    get:
+      summary: Откликнуться на вещь
+      operationId: responseToThing
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      responses:
+        '200':
+          description: Успешный отклик
+        '404':
+          description: Вещь не найдена
 
 
 components:

@@ -29,6 +29,11 @@ data class Thing(
 
     val photos: List<String>,
 
+    /**
+     * id тех кто откликнулся
+     */
+    val responses: List<UUID>?,
+
     val completedAt: Instant?,
 
     val version: Long? = null

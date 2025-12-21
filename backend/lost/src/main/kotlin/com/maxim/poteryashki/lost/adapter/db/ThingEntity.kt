@@ -46,6 +46,9 @@ data class ThingEntity(
     @Field(type = FieldType.Keyword)
     val photos: List<String>,
 
+    @Field(type = FieldType.Keyword)
+    val responses: List<UUID>?,
+
     @Field(type = FieldType.Date, format = [DateFormat.date_time])
     val completedAt: Instant?,
 

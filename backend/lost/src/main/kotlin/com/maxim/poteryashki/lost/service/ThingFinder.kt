@@ -18,6 +18,7 @@ class ThingFinder(
 ) {
 
     fun find(
+        userId: UUID, // Тот от кого пришел запрос
         type: ThingType?,
         date: Instant?,
         place: Place,
@@ -31,13 +32,22 @@ class ThingFinder(
             description = description,
             pageable = pageable
         )
+            .map { hideResponses(it, userId ) }
 
     fun findByOwner(owner: UUID, pageable: Pageable): List<Thing> =
         thingDao.findAllByOwner(owner, pageable)
 
-    fun findById(id: String): Thing? =
+    fun findById(id: String, user: UUID): Thing? =
         thingDao.getById(id)
+            ?.let { hideResponses(it, user) }
 
     fun existsById(id: String): Boolean =
         thingDao.existsById(id)
+
+    private fun hideResponses(thing: Thing, user: UUID) =
+        if (thing.owner != user) {
+            thing.copy(responses = null)
+        } else {
+            thing
+        }
 }
