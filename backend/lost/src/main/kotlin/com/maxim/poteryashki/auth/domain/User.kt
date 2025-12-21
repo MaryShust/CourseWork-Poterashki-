@@ -2,6 +2,7 @@ package com.maxim.poteryashki.auth.domain
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import java.time.Instant
 import java.util.UUID
 
 data class User(
@@ -17,7 +18,9 @@ data class User(
 
     val password: String,
 
-    val metadata: UserMetadata?
+    val metadata: UserMetadata?,
+
+    val createdAt: Instant = Instant.now(),
 )
 
 @JsonTypeInfo(

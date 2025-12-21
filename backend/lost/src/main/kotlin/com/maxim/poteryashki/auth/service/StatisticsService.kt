@@ -18,9 +18,9 @@ class StatisticsService(
 
     @Transactional
     fun incrementActive(userId: UUID) {
-        val before = statisticsDao.getStatistics(userId)
+        var before = statisticsDao.getStatistics(userId)
         if (before == null) {
-            throw IllegalArgumentException("User not found")
+            before = initializeEmpty(userId)
         }
 
         statisticsDao.save(
@@ -31,9 +31,9 @@ class StatisticsService(
 
     @Transactional
     fun decrementActive(userId: UUID) {
-        val before = statisticsDao.getStatistics(userId)
+        var before = statisticsDao.getStatistics(userId)
         if (before == null) {
-            throw IllegalArgumentException("User not found")
+            before = initializeEmpty(userId)
         }
 
         statisticsDao.save(
@@ -44,9 +44,9 @@ class StatisticsService(
 
     @Transactional
     fun incrementFound(userId: UUID) {
-        val before = statisticsDao.getStatistics(userId)
+        var before = statisticsDao.getStatistics(userId)
         if (before == null) {
-            throw IllegalArgumentException("User not found")
+            before = initializeEmpty(userId)
         }
 
         statisticsDao.save(
@@ -57,9 +57,9 @@ class StatisticsService(
 
     @Transactional
     fun addFee(fee: Int, userId: UUID) {
-        val before = statisticsDao.getStatistics(userId)
+        var before = statisticsDao.getStatistics(userId)
         if (before == null) {
-            throw IllegalArgumentException("User not found")
+            before = initializeEmpty(userId)
         }
 
         statisticsDao.save(
@@ -69,5 +69,16 @@ class StatisticsService(
             ),
             userId
         )
+    }
+
+    private fun initializeEmpty(userId: UUID): Statistics {
+        val statistics = Statistics(
+            active = 0,
+            totalFound = 0,
+            totalFee = 0,
+            maxFee = 0
+        )
+
+        return statistics
     }
 }

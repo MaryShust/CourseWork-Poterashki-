@@ -10,6 +10,7 @@
     <include file="changelog/2025-11-16-token-table.xml" relativeToChangelogFile="true"/>
     <include file="changelog/2025-12-21-statistics.xml" relativeToChangelogFile="true" />
     <include file="changelog/2025-12-21-add-fee-stats.xml" relativeToChangelogFile="true" />
+    <include file="changelog/2025-12-21-add-created-at.xml" relativeToChangelogFile="true" />
 
 
 </databaseChangeLog>

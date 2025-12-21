@@ -4,6 +4,7 @@ import org.springframework.data.jdbc.repository.query.Modifying
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
+import java.time.Instant
 import java.util.UUID
 
 @Repository
@@ -13,21 +14,22 @@ interface UserRepository : CrudRepository<UserDb, UUID> {
     @Query(
         """UPDATE users SET 
         username = :name,
+        email = :email,
         password = :password,
         data = :metadata
         WHERE id = :id
     """
     )
-    fun update(id: UUID, name: String, password: String, metadata: String)
+    fun update(id: UUID, name: String, email: String, password: String, metadata: String)
 
     @Query(
         """
-    INSERT INTO users (username, email, password, data) 
-    VALUES (:name, :email, :password, :metadata) 
+    INSERT INTO users (username, email, password, data, created_at) 
+    VALUES (:name, :email, :password, :metadata, :createdAt) 
     RETURNING id;
     """
     )
-    fun create(name: String, email: String, password: String, metadata: String): UUID
+    fun create(name: String, email: String, password: String, metadata: String, createdAt: Instant): UUID
 
     @Query(
         """

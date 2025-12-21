@@ -312,3 +312,8 @@ components:
           type: string
           example: "123 Main St, Anytown, USA"
           description: Адрес пользователя
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+          description: Дата создания профиля

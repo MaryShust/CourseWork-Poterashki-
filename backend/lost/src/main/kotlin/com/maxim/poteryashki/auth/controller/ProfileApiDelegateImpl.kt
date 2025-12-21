@@ -75,6 +75,7 @@ class ProfileApiDelegateImpl(
         }
 
         val toUpdate = user.copy(
+            name = profile.name,
             email = profile.email,
             metadata = UserMetadata.basic(
                 name = profile.name,

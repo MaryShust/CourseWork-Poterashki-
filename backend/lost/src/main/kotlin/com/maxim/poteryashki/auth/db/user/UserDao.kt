@@ -17,13 +17,15 @@ class UserDao(
             user.name,
             user.email,
             user.password,
-            objectMapper.writeValueAsString(user.metadata)
+            objectMapper.writeValueAsString(user.metadata),
+            user.createdAt
         )
 
     fun update(user: User) =
         userRepository.update(
             user.id!!,
             user.name,
+            user.email,
             user.password,
             objectMapper.writeValueAsString(user.metadata)
         )
@@ -39,7 +41,8 @@ class UserDao(
         username,
         email,
         password,
-        objectMapper.readValue(data, UserMetadata::class.java)
+        objectMapper.readValue(data, UserMetadata::class.java),
+        createdAt = createdAt
     )
 
 
