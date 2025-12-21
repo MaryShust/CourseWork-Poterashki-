@@ -43,6 +43,9 @@ data class ThingEntity(
     @Field(type = FieldType.Text)
     val description: String,
 
+    @Field(type = FieldType.Integer)
+    val fee: Int?,
+
     @Field(type = FieldType.Keyword)
     val photos: List<String>,
 

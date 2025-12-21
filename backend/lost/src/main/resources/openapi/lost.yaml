@@ -329,6 +329,10 @@ components:
           type: string
           description: Название вещи
           example: "Черный рюкзак"
+        fee:
+          type: integer
+          description: Сумма вознаграждения
+          example: 50
         type:
           $ref: '#/components/schemas/ThingTypeDto'
         date:
@@ -407,6 +411,10 @@ components:
           type: string
           description: Описание вещи
           example: "Черный рюкзак с логотипом университета"
+        fee:
+          type: integer
+          description: Сумма вознаграждения
+          example: 50
         responses:
           type: array
           items:
@@ -517,6 +525,10 @@ components:
           example: "2023-10-04T11:00:00Z"
         place:
           $ref: '#/components/schemas/PlaceDto'
+        fee:
+          type: integer
+          description: Сумма вознаграждения
+          example: 50
         description:
           type: string
           example: "Черный рюкзак, внутри учебники"

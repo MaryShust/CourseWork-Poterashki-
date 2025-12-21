@@ -29,6 +29,7 @@ class ThingRegistry(
 
     fun create(
         title: String,
+        fee: Int?,
         type: ThingType,
         date: Instant,
         place: Place,
@@ -39,6 +40,7 @@ class ThingRegistry(
         val toSave = Thing(
             id = null,
             title = title,
+            fee = fee,
             owner = owner,
             type = type,
             createdAt = Instant.now(),

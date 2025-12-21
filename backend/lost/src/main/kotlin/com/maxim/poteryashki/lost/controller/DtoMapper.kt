@@ -92,6 +92,7 @@ fun ThingDto.toDomain(id: String, owner: UUID) =
         completedAt = completedAt?.toInstant(),
         title = title,
         responses = null,
+        fee = fee,
         version = version,
     )
 

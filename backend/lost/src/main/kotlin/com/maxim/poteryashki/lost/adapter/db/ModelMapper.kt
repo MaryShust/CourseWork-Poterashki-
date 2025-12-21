@@ -5,7 +5,6 @@ import com.maxim.poteryashki.lost.domain.Place as PlaceDomain
 import com.maxim.poteryashki.lost.domain.Thing as ThingDomain
 
 
-
 fun ThingDomain.toEntity(): ThingEntity =
     ThingEntity(
         id = id,
@@ -19,8 +18,9 @@ fun ThingDomain.toEntity(): ThingEntity =
         photos = photos,
         completedAt = completedAt,
         responses = responses,
+        fee = fee,
         version = version
-        )
+    )
 
 fun PlaceDomain.toEntity(): Place =
     Place(
@@ -50,8 +50,10 @@ fun ThingEntity.toDomain(): ThingDomain =
         photos = photos,
         completedAt = completedAt,
         responses = responses,
+        fee = fee,
         version = version
-        )
+    )
+
 fun Place.toDomain(): PlaceDomain =
     PlaceDomain(
         city = city,
@@ -60,6 +62,7 @@ fun Place.toDomain(): PlaceDomain =
         placeName = placeName,
         extraDescription = extraDescription
     )
+
 fun ThingType.toDomain(): ThingTypeDomain =
     when (this) {
         ThingType.LOST -> ThingTypeDomain.LOST

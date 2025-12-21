@@ -34,6 +34,11 @@ data class Thing(
      */
     val responses: List<UUID>?,
 
+    /**
+     * Сумма вознаграждения
+     */
+    val fee: Int?,
+
     val completedAt: Instant?,
 
     val version: Long? = null
