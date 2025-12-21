@@ -3,7 +3,9 @@ package com.maxim.poteryashki.auth.controller
 import com.maxim.poteryashki.auth.api.ProfileApiDelegate
 import com.maxim.poteryashki.auth.domain.UserMetadata
 import com.maxim.poteryashki.auth.dto.GetProfileResponse
+import com.maxim.poteryashki.auth.dto.GetStatisticsResponse
 import com.maxim.poteryashki.auth.dto.Profile
+import com.maxim.poteryashki.auth.service.StatisticsService
 import com.maxim.poteryashki.auth.service.TokenService
 import com.maxim.poteryashki.auth.service.UserRegistry
 import org.slf4j.LoggerFactory
@@ -17,6 +19,7 @@ private val logger = LoggerFactory.getLogger(ProfileApiDelegateImpl::class.java)
 @Component
 class ProfileApiDelegateImpl(
     private val userRegistry: UserRegistry,
+    private val statisticsService: StatisticsService,
     private val tokenService: TokenService,
 ): ProfileApiDelegate{
     override fun getProfile(authorization: String): ResponseEntity<GetProfileResponse> {
@@ -47,6 +50,20 @@ class ProfileApiDelegateImpl(
         }
 
         return ResponseEntity.ok(user.toProfileResponse())
+    }
+
+    override fun getStatistics(authorization: String): ResponseEntity<GetStatisticsResponse> {
+        val authUser = tokenService.getUserByHeader(authorization)
+
+        if (authUser == null)  {
+            logger.debug("User not found for token: $authorization")
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+
+        val stats = statisticsService.getStatistics(authUser.id!!)
+
+        return ResponseEntity.ok().body(stats?.toStatisticsResponse())
+
     }
 
     override fun updateProfile(authorization: String, profile: Profile): ResponseEntity<Unit> {

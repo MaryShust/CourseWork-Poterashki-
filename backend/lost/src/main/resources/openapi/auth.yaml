@@ -106,6 +106,32 @@ paths:
           description: Успешное обновление
         '401':
           description: Пользователь не авторизован
+
+  /my-statistics:
+    get:
+      summary: Получение статистики пользователя
+      description: Возвращает статистику пользователя по токену
+      operationId: getStatistics
+      tags:
+        - profile
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Статистика найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStatisticsResponse'
+        '401':
+          description: Пользователь не авторизован
+
+
+
   /user/{id}/profile:
     get:
       summary: Получение информации о пользователе
@@ -242,6 +268,20 @@ components:
           type: string
           example: "123 Main St, Anytown, USA"
           description: Адрес пользователя
+    GetStatisticsResponse:
+      type: object
+      required:
+        - active
+        - foundTotal
+      properties:
+        active:
+          type: integer
+          example: 10
+          description: Количество активных объявлений
+        foundTotal:
+          type: integer
+          example: 20
+          description: Общее количество найденных объявлений
     GetProfileResponse:
       type: object
       required:

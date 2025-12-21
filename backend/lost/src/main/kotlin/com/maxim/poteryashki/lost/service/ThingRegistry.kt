@@ -1,5 +1,6 @@
 package com.maxim.poteryashki.lost.service
 
+import com.maxim.poteryashki.auth.service.StatisticsService
 import com.maxim.poteryashki.lost.adapter.db.ThingDao
 import com.maxim.poteryashki.lost.adapter.s3.S3Adapter
 import com.maxim.poteryashki.lost.domain.Place
@@ -21,7 +22,8 @@ private val logger = LoggerFactory.getLogger(ThingRegistry::class.java)
 @Service
 class ThingRegistry(
     private val thingDao: ThingDao,
-    private val s3Adapter: S3Adapter
+    private val s3Adapter: S3Adapter,
+    private val statisticsService: StatisticsService
 ) {
 
     fun create(
@@ -44,6 +46,8 @@ class ThingRegistry(
             completedAt = null,
         )
 
+        statisticsService.incrementActive(owner)
+
         return thingDao.create(toSave)
     }
 
@@ -58,6 +62,11 @@ class ThingRegistry(
         }
         if (existing.version != thing.version) {
             throw ThingVersionMismatchException(thing.version, existing.version)
+        }
+
+        if (existing.completedAt == null && thing.completedAt != null && thing.type == ThingType.LOST) {
+            statisticsService.incrementFound(actor)
+            statisticsService.decrementActive(actor)
         }
         thingDao.update(thing)
 

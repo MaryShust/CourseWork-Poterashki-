@@ -11,6 +11,10 @@ class StatisticsService(
     private val statisticsDao: StatisticsDao
 ) {
 
+    fun getStatistics(userId: UUID): Statistics? {
+        return statisticsDao.getStatistics(userId)
+    }
+
     @Transactional
     fun incrementActive(userId: UUID) {
         val before = statisticsDao.getStatistics(userId)
