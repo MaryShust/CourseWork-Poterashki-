@@ -7,6 +7,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders as Q
 import org.springframework.data.domain.Pageable
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
+import org.springframework.data.elasticsearch.core.query.Criteria
+import org.springframework.data.elasticsearch.core.query.CriteriaQuery
 import org.springframework.stereotype.Repository
 import java.time.Duration
 import java.time.Instant
@@ -88,13 +90,8 @@ class ThingRepositoryImpl(
     }
 
     override fun findAllByOwner(owner: UUID, pageable: Pageable): List<ThingEntity> {
-        val esQuery = Q.term {
-            it.field("owner").value(FieldValue.of(owner.toString()))
-        }
-        val query = NativeQuery.builder()
-            .withQuery(esQuery)
-            .withPageable(pageable)
-            .build()
+        val criteria = Criteria("owner").`is`(owner)
+        val query = CriteriaQuery(criteria)
 
         val hits = operations.search(query, ThingEntity::class.java)
         return hits.map { it.content }.toList()

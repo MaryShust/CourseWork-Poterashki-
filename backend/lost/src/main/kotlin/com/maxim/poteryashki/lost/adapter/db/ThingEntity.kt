@@ -19,7 +19,7 @@ data class ThingEntity(
     val title: String,
 
     @Field(type = FieldType.Keyword)
-    val owner: UUID,
+    val owner: String,
 
     @Field(type = FieldType.Keyword)
     val type: ThingType,

@@ -1,5 +1,6 @@
 package com.maxim.poteryashki.lost.adapter.db
 
+import java.util.UUID
 import com.maxim.poteryashki.lost.domain.ThingType as ThingTypeDomain
 import com.maxim.poteryashki.lost.domain.Place as PlaceDomain
 import com.maxim.poteryashki.lost.domain.Thing as ThingDomain
@@ -9,7 +10,7 @@ fun ThingDomain.toEntity(): ThingEntity =
     ThingEntity(
         id = id,
         title = title,
-        owner = owner,
+        owner = owner.toString(),
         type = type.toEntity(),
         createdAt = createdAt,
         date = date,
@@ -41,7 +42,7 @@ fun ThingEntity.toDomain(): ThingDomain =
     ThingDomain(
         id = id,
         title = title,
-        owner = owner,
+        owner = UUID.fromString(owner),
         type = type.toDomain(),
         createdAt = createdAt,
         date = date,
