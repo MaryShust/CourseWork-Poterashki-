@@ -171,7 +171,13 @@ export default {
       this.errorMessage = ''
 
       try {
-        const response = await fetch(`/profile_data?id=${userId}`)
+        const response = await fetch(`/api/public/my-profile`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': userId
+            }
+        })
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
@@ -248,7 +254,6 @@ export default {
         }
 
         const requestData = {
-          id: userId,
           name: this.profile.name,
           phone: this.profile.phone,
           city: this.profile.city,
@@ -257,10 +262,11 @@ export default {
 
         console.log('📤 Отправка данных на сервер:', requestData)
 
-        const response = await fetch('/update_profile', {
+        const response = await fetch('/api/public/my-profile', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': userId
           },
           body: JSON.stringify(requestData)
         })
@@ -269,25 +275,18 @@ export default {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        const result = await response.json()
-        console.log('✅ Ответ от сервера:', result)
+        // Сохраняем в localStorage как backup
+        localStorage.setItem('userProfile', JSON.stringify(this.profile))
 
-        if (result === true) {
-          // Сохраняем в localStorage как backup
-          localStorage.setItem('userProfile', JSON.stringify(this.profile))
-
-          const oldUsername = localStorage.getItem('currentUser')
-          if (oldUsername !== this.profile.name) {
+        const oldUsername = localStorage.getItem('currentUser')
+        if (oldUsername !== this.profile.name) {
             console.log(`🔄 Изменение имени пользователя: ${oldUsername} → ${this.profile.name}`)
             localStorage.setItem('currentUser', this.profile.name)
             this.$root.$emit('auth-changed')
             this.eventBus.$emit('user-name-changed', this.profile.name)
             this.successMessage = `Имя успешно изменено на "${this.profile.name}"!`
-          } else {
-            this.successMessage = 'Профиль успешно сохранен!'
-          }
         } else {
-          throw new Error('Сервер вернул false')
+            this.successMessage = 'Профиль успешно сохранен!'
         }
 
         setTimeout(() => {
