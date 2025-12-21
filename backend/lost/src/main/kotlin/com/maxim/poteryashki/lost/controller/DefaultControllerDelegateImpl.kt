@@ -36,7 +36,7 @@ class DefaultControllerDelegateImpl(
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
-            logger.debug("User not found for token: $authorization")
+            logger.info("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -60,7 +60,7 @@ class DefaultControllerDelegateImpl(
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null || user.id == null) {
-            logger.debug("User not found for token: $authorization")
+            logger.info("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -80,7 +80,7 @@ class DefaultControllerDelegateImpl(
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
-            logger.debug("User not found for token: $authorization")
+            logger.info("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -103,7 +103,7 @@ class DefaultControllerDelegateImpl(
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null || user.id == null) {
-            logger.debug("User not found for token: $authorization")
+            logger.info("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -127,7 +127,7 @@ class DefaultControllerDelegateImpl(
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null || user.id == null) {
-            logger.debug("User not found for token: $authorization")
+            logger.info("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
@@ -145,7 +145,7 @@ class DefaultControllerDelegateImpl(
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
-            logger.debug("User not found for token: $authorization")
+            logger.info("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
         val toUpdate = thingDto.toDomain(id, owner = user.id!!)
@@ -160,7 +160,7 @@ class DefaultControllerDelegateImpl(
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null || user.id == null) {
-            logger.debug("User not found for token: $authorization")
+            logger.info("User not found for token: $authorization")
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 

@@ -75,7 +75,20 @@ class ThingRegistry(
             statisticsService.addFee(thing.fee ?: 0, actor)
         }
 
-        val updated = merged.copy(version = (merged.version ?: 0) + 1)
+        thingDao.update(merged.incrementVersion())
+    }
+
+    fun complete(thingId: String, actor: UUID) {
+        val existing = thingDao.getById(thingId)
+
+        if (existing == null) {
+            throw ThingNotFoundException(thingId)
+        }
+        if (existing.owner != actor) {
+            throw ThingNotFoundException(thingId)
+        }
+
+        val updated = existing.copy(completedAt = Instant.now()).incrementVersion()
 
         thingDao.update(updated)
     }
@@ -100,7 +113,7 @@ class ThingRegistry(
                 photos = existing.photos + link
             )
             val afterMerge = thingMergeService.mergeResponses(existing, updated)
-            return thingDao.update(afterMerge.copy(version = (afterMerge.version ?: 0) + 1))
+            return thingDao.update(afterMerge.incrementVersion())
         } catch (e: Exception) {
             logger.error("Failed to upload image", e)
             throw RuntimeException("Failed to upload image", e)
@@ -121,7 +134,9 @@ class ThingRegistry(
 
         val updated = existingResponses + userId
 
-        thingDao.update(existing.copy(responses = updated))
+        thingDao.update(existing.copy(responses = updated).incrementVersion())
     }
+
+    private fun Thing.incrementVersion() = this.copy(version = (version ?: 0) +1)
 
 }
