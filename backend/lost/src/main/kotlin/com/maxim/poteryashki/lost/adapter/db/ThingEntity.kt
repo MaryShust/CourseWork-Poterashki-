@@ -15,6 +15,9 @@ data class ThingEntity(
     @Id
     var id: String?,
 
+    @Field(type = FieldType.Text)
+    val title: String,
+
     @Field(type = FieldType.Keyword)
     val owner: UUID,
 

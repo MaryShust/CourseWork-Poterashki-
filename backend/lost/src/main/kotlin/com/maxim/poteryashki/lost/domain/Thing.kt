@@ -6,6 +6,8 @@ import java.util.UUID
 data class Thing(
     val id: String?,
 
+    val title: String,
+
     val owner: UUID,
 
     val type: ThingType,

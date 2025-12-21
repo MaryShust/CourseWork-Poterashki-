@@ -27,6 +27,7 @@ class ThingRegistry(
 ) {
 
     fun create(
+        title: String,
         type: ThingType,
         date: Instant,
         place: Place,
@@ -36,6 +37,7 @@ class ThingRegistry(
 
         val toSave = Thing(
             id = null,
+            title = title,
             owner = owner,
             type = type,
             createdAt = Instant.now(),

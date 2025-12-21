@@ -40,6 +40,7 @@ class DefaultControllerDelegateImpl(
         }
 
         val created = thingRegistry.create(
+            title = thingCreateDto.title,
             type = thingCreateDto.type.toDomain(),
             date = thingCreateDto.date.toInstant(),
             description = thingCreateDto.description,

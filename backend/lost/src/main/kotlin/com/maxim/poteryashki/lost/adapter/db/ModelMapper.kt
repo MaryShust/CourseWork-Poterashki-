@@ -9,6 +9,7 @@ import com.maxim.poteryashki.lost.domain.Thing as ThingDomain
 fun ThingDomain.toEntity(): ThingEntity =
     ThingEntity(
         id = id,
+        title = title,
         owner = owner,
         type = type.toEntity(),
         createdAt = createdAt,
@@ -38,6 +39,7 @@ fun ThingTypeDomain.toEntity(): ThingType =
 fun ThingEntity.toDomain(): ThingDomain =
     ThingDomain(
         id = id,
+        title = title,
         owner = owner,
         type = type.toDomain(),
         createdAt = createdAt,

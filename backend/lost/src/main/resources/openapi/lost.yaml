@@ -298,11 +298,16 @@ components:
     ThingCreateDto:
       type: object
       required:
+        - title
         - type
         - date
         - place
         - description
       properties:
+        title:
+          type: string
+          description: Название вещи
+          example: "Черный рюкзак"
         type:
           $ref: '#/components/schemas/ThingTypeDto'
         date:
@@ -342,6 +347,7 @@ components:
     ThingDto:
       type: object
       required:
+        - title
         - owner
         - type
         - date
@@ -358,6 +364,10 @@ components:
           format: uuid
           description: Идентификатор владельца
           example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+        title:
+          type: string
+          description: Название вещи
+          example: "Черный рюкзак"
         type:
           $ref: '#/components/schemas/ThingTypeDto'
         createdAt:
@@ -376,6 +386,11 @@ components:
           type: string
           description: Описание вещи
           example: "Черный рюкзак с логотипом университета"
+        responses:
+          type: array
+          items:
+            type: string
+            description: Номера телефонов тех, кто откликнулся (видны только для владельца)
         photos:
           type: array
           items:

@@ -74,6 +74,7 @@ fun Thing.toDto() =
         photos = this.photos.map { it.toUri() },
         createdAt = this.createdAt.toOffsetDateTime(),
         completedAt = this.completedAt?.toOffsetDateTime(),
+        title = title,
         version = this.version,
     )
 
@@ -88,6 +89,7 @@ fun ThingDto.toDomain(id: String, owner: UUID) =
         description = description,
         photos = photos.map { it.toString() },
         completedAt = completedAt?.toInstant(),
+        title = title,
         version = version,
     )
 
