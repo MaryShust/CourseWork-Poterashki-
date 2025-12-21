@@ -10,11 +10,11 @@
         <h3>Тип объявления</h3>
 
         <div class="radio-group">
-          <label class="radio-option" :class="{ 'selected': formData.announcementType === 'lost' }">
+          <label class="radio-option" :class="{ 'selected': formData.type === 'LOST' }">
             <input
               type="radio"
-              v-model="formData.announcementType"
-              value="lost"
+              v-model="formData.type"
+              value="LOST"
               @change="handleTypeChange"
             >
             <div class="radio-content">
@@ -26,11 +26,11 @@
             </div>
           </label>
 
-          <label class="radio-option" :class="{ 'selected': formData.announcementType === 'found' }">
+          <label class="radio-option" :class="{ 'selected': formData.type === 'FOUND' }">
             <input
               type="radio"
-              v-model="formData.announcementType"
-              value="found"
+              v-model="formData.type"
+              value="FOUND"
               @change="handleTypeChange"
             >
             <div class="radio-content">
@@ -43,7 +43,7 @@
           </label>
         </div>
 
-        <div v-if="errors.announcementType" class="field-error">{{ errors.announcementType }}</div>
+        <div v-if="errors.type" class="field-error">{{ errors.type }}</div>
       </div>
 
       <div class="form-section">
@@ -56,7 +56,7 @@
             id="title"
             v-model="formData.title"
             required
-            :placeholder="formData.announcementType === 'found' ? 'Например: Найденные ключи, Найденный телефон, Найденный кошелек' : 'Например: Ключи от квартиры, iPhone 13, Кошелек'"
+            :placeholder="formData.type === 'FOUND' ? 'Например: Найденные ключи, Найденный телефон, Найденный кошелек' : 'Например: Ключи от квартиры, iPhone 13, Кошелек'"
             :class="{ 'error': errors.title }"
             maxlength="100"
           >
@@ -65,41 +65,23 @@
         </div>
 
         <div class="form-group">
-          <label for="category">Категория</label>
-          <select
-            id="category"
-            v-model="formData.category"
-            :class="{ 'error': errors.category }"
-          >
-            <option value="">Выберите категорию</option>
-            <option value="ELECTRONICS">Электроника</option>
-            <option value="DOCUMENTS">Документы</option>
-            <option value="KEYS">Ключи</option>
-            <option value="WALLET">Кошелек/Деньги</option>
-            <option value="JEWELRY">Украшения</option>
-            <option value="CLOTHES">Одежда</option>
-            <option value="ANIMALS">Животные</option>
-            <option value="BAGS">Сумки/Рюкзаки</option>
-            <option value="OTHER">Другое</option>
-          </select>
-          <div v-if="errors.category" class="field-error">{{ errors.category }}</div>
-        </div>
-
-        <div class="form-group">
-          <label for="description">Подробное описание</label>
+          <label for="description">Подробное описание *</label>
           <textarea
             id="description"
             v-model="formData.description"
             rows="4"
-            :placeholder="formData.announcementType === 'found' ? 'Опишите найденную вещь подробно: где нашли, состояние, отличительные признаки...' : 'Опишите вещь подробно: отличительные признаки, особенности, состояние...'"
+            required
+            :placeholder="formData.type === 'FOUND' ? 'Опишите найденную вещь подробно: где нашли, состояние, отличительные признаки...' : 'Опишите вещь подробно: отличительные признаки, особенности, состояние...'"
             maxlength="1000"
+            :class="{ 'error': errors.description }"
           ></textarea>
+          <div v-if="errors.description" class="field-error">{{ errors.description }}</div>
           <div class="field-hint">{{ formData.description.length }}/1000 символов</div>
         </div>
       </div>
 
       <div class="form-section">
-        <h3>{{ formData.announcementType === 'found' ? 'Место и время находки' : 'Место и время потери' }}</h3>
+        <h3>{{ formData.type === 'FOUND' ? 'Место и время находки' : 'Место и время потери' }}</h3>
 
         <div class="form-row">
           <div class="form-group half">
@@ -107,7 +89,7 @@
             <input
               type="text"
               id="city"
-              v-model="formData.city"
+              v-model="formData.place.city"
               required
               placeholder="Например: Москва"
               :class="{ 'error': errors.city }"
@@ -116,42 +98,63 @@
           </div>
 
           <div class="form-group half">
-            <label for="address">Адрес</label>
+            <label for="street">Улица</label>
             <input
               type="text"
-              id="address"
-              v-model="formData.address"
-              :placeholder="formData.announcementType === 'found' ? 'Где именно нашли вещь' : 'Улица, дом, квартира'"
+              id="street"
+              v-model="formData.place.street"
+              :placeholder="formData.type === 'FOUND' ? 'Где именно нашли вещь' : 'Улица'"
+            >
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="house">Дом</label>
+            <input
+              type="text"
+              id="house"
+              v-model="formData.place.house"
+              placeholder="Номер дома"
+            >
+          </div>
+
+          <div class="form-group half">
+            <label for="placeName">Название места</label>
+            <input
+              type="text"
+              id="placeName"
+              v-model="formData.place.placeName"
+              placeholder="Например: ТЦ 'Мега', Парк 'Сокольники'"
             >
           </div>
         </div>
 
         <div class="form-group">
-          <label for="lostDate">{{ formData.announcementType === 'found' ? 'Дата находки *' : 'Дата потери *' }}</label>
-          <input
-            type="date"
-            id="lostDate"
-            v-model="formData.lostDate"
-            required
-            :class="{ 'error': errors.lostDate }"
-            :max="today"
-          >
-          <div v-if="errors.lostDate" class="field-error">{{ errors.lostDate }}</div>
+          <label for="extraDescription">Дополнительное описание места</label>
+          <textarea
+            id="extraDescription"
+            v-model="formData.place.extraDescription"
+            rows="3"
+            placeholder="Дополнительные детали о месте, ориентиры и т.д."
+            maxlength="500"
+          ></textarea>
+          <div class="field-hint">{{ formData.place.extraDescription.length }}/500 символов</div>
         </div>
 
         <div class="form-group">
-          <label for="color">Цвет вещи</label>
+          <label for="date">{{ formData.type === 'FOUND' ? 'Дата находки *' : 'Дата потери *' }}</label>
           <input
-            type="text"
-            id="color"
-            v-model="formData.color"
-            placeholder="Например: черный, красный, синий с белым"
+            type="datetime-local"
+            id="date"
+            v-model="formData.date"
+            required
+            :class="{ 'error': errors.date }"
+            :max="currentDateTime"
           >
+          <div v-if="errors.date" class="field-error">{{ errors.date }}</div>
+          <div class="field-hint">Укажите дату и время</div>
         </div>
-      </div>
-
-      <div class="form-section">
-        <h3>{{ formData.announcementType === 'found' ? 'Вознаграждение и фотография находки' : 'Вознаграждение и фотография' }}</h3>
 
         <div class="form-group">
           <label for="reward">Вознаграждение (руб.)</label>
@@ -163,16 +166,20 @@
             min="0"
             step="100"
           >
-          <div class="field-hint" v-if="formData.announcementType === 'found'">
+          <div class="field-hint" v-if="formData.type === 'FOUND'">
             Укажите сумму, которую хотите получить за возврат находки (по желанию)
           </div>
           <div class="field-hint" v-else>
             Укажите сумму, которую готовы заплатить за возврат
           </div>
         </div>
+      </div>
+
+      <div class="form-section">
+        <h3>{{ formData.type === 'FOUND' ? 'Фотография находки' : 'Фотография вещи' }}</h3>
 
         <div class="form-group">
-          <label for="photo">Фотография вещи</label>
+          <label for="photo">Фотография</label>
           <div class="file-upload">
             <input
               type="file"
@@ -183,22 +190,44 @@
               class="file-input"
             >
             <label for="photo" class="file-label">
-              <span v-if="!formData.photo">Выберите файл</span>
-              <span v-else>Файл выбран: {{ formData.photo.name }}</span>
+              <span v-if="!selectedFile">Выберите файл</span>
+              <span v-else>Файл выбран: {{ selectedFile.name }}</span>
             </label>
             <button
               type="button"
               class="btn-remove"
               @click="removePhoto"
-              v-if="formData.photo"
+              v-if="selectedFile"
             >
               ×
             </button>
           </div>
+
+          <!-- Превью существующих фото -->
+          <div class="existing-photos" v-if="existingPhotos.length > 0">
+            <h4>Текущие фотографии:</h4>
+            <div class="photos-grid">
+              <div class="photo-item" v-for="(photo, index) in existingPhotos" :key="index">
+                <img :src="getPhotoUrl(photo)" alt="Фото" @error="handleImageError">
+                <button
+                  type="button"
+                  class="btn-remove-small"
+                  @click="removeExistingPhoto(index)"
+                  v-if="isEditMode"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Превью новой фото -->
           <div class="preview" v-if="photoPreview">
+            <h4>Новое фото:</h4>
             <img :src="photoPreview" alt="Предпросмотр">
           </div>
-          <div class="field-hint">Максимальный размер: 5MB. Форматы: JPG, PNG</div>
+
+          <div class="field-hint">Максимальный размер: 5MB. Форматы: JPG, PNG, GIF</div>
         </div>
       </div>
 
@@ -235,23 +264,34 @@ export default {
     }
   },
   data() {
+    const currentDate = new Date()
+    // Форматируем дату для input[type="datetime-local"]
+    const formattedDate = new Date(currentDate.getTime() - currentDate.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16)
+
     return {
       loading: false,
       successMessage: '',
       errorMessage: '',
       errors: {},
       photoPreview: null,
+      selectedFile: null,
+      existingPhotos: [],
+      editingData: null,
       formData: {
-        announcementType: 'lost', // По умолчанию "Вы потеряли"
+        type: 'LOST',
         title: '',
-        category: '',
         description: '',
-        city: '',
-        address: '',
-        lostDate: '',
-        color: '',
-        reward: 0,
-        photo: null
+        date: formattedDate,
+        place: {
+          city: '',
+          street: '',
+          house: '',
+          placeName: '',
+          extraDescription: ''
+        },
+        reward: 0
       }
     }
   },
@@ -259,8 +299,13 @@ export default {
     isEditMode() {
       return !!this.announcementId
     },
-    today() {
-      return new Date().toISOString().split('T')[0]
+    currentDateTime() {
+      const now = new Date()
+      // Получаем смещение временной зоны в минутах
+      const timezoneOffset = now.getTimezoneOffset()
+      // Преобразуем в миллисекунды и корректируем
+      const localTime = new Date(now.getTime() - (timezoneOffset * 60000))
+      return localTime.toISOString().slice(0, 16)
     }
   },
   mounted() {
@@ -282,29 +327,40 @@ export default {
 
       this.loading = true
       try {
-        const response = await fetch(`/announcements/${this.announcementId}`)
-        if (!response.ok) throw new Error('Ошибка загрузки')
+        const userId = localStorage.getItem('currentUserId')
+        const response = await fetch(`/api/thing/${this.announcementId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': userId,
+                'id': this.announcementId
+            }
+        })
+
+        if (!response.ok) throw new Error('Ошибка загрузки объявления')
 
         const data = await response.json()
+        this.editingData = { ...data }
 
-        const announcementType = data.isFound ? 'found' : 'lost'
+        // Сохраняем существующие фото
+        this.existingPhotos = data.photos || []
 
+        // Преобразуем данные для формы
         this.formData = {
-          announcementType: announcementType,
-          title: data.title || '',
-          category: data.category || '',
+          type: data.type || 'LOST',
+          title: this.extractTitleFromDescription(data.description) || '',
           description: data.description || '',
-          city: data.city || '',
-          address: data.address || '',
-          lostDate: data.lostDate ? data.lostDate.split('T')[0] : '',
-          color: data.color || '',
-          reward: data.reward || 0,
-          photo: null // Фото нужно загружать отдельно или в base64
+          date: data.date ? new Date(data.date).toISOString().slice(0, 16) : this.formData.date,
+          place: {
+            city: data.place?.city || '',
+            street: data.place?.street || '',
+            house: data.place?.house || '',
+            placeName: data.place?.placeName || '',
+            extraDescription: data.place?.extraDescription || ''
+          },
+          reward: this.extractRewardFromDescription(data.description) || 0
         }
 
-        if (data.photoUrl) {
-          this.photoPreview = data.photoUrl
-        }
       } catch (error) {
         console.error('Ошибка загрузки объявления:', error)
         this.errorMessage = 'Не удалось загрузить объявление'
@@ -313,10 +369,36 @@ export default {
       }
     },
 
+    extractTitleFromDescription(description) {
+      // Простая логика извлечения заголовка из описания
+      if (!description) return ''
+      const firstSentence = description.split('.')[0]
+      return firstSentence.length > 100 ? firstSentence.substring(0, 100) : firstSentence
+    },
+
+    extractRewardFromDescription(description) {
+      if (!description) return 0
+      const rewardMatch = description.match(/(\d+)[\s]*руб/)
+      return rewardMatch ? parseInt(rewardMatch[1]) : 0
+    },
+
+    getPhotoUrl(photo) {
+      // Если фото - это URL или base64 строка
+      if (photo.startsWith('http') || photo.startsWith('data:')) {
+        return photo
+      }
+      // Иначе предполагаем, что это имя файла
+      return `/api/thing/${this.announcementId}/photo/${photo}`
+    },
+
+    handleImageError(event) {
+      // Заменяем сломанное изображение на placeholder
+      event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+PGZvbnQgc2l6ZT0iMTQiPlBob3RvPC9mb250PjwvdGV4dD48L3N2Zz4='
+    },
+
     handleTypeChange() {
-      console.log(this.formData.announcementType)
-      //this.formData.announcementType = type
-      console.log(this.formData.announcementType)
+      // Можно добавить логику при изменении типа
+      console.log('Тип объявления изменен на:', this.formData.type)
     },
 
     handleFileUpload(event) {
@@ -334,7 +416,7 @@ export default {
         return
       }
 
-      this.formData.photo = file
+      this.selectedFile = file
 
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -344,17 +426,23 @@ export default {
     },
 
     removePhoto() {
-      this.formData.photo = null
+      this.selectedFile = null
       this.photoPreview = null
-      this.$refs.fileInput.value = ''
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = ''
+      }
+    },
+
+    removeExistingPhoto(index) {
+      this.existingPhotos.splice(index, 1)
     },
 
     validateForm() {
       this.errors = {}
       let isValid = true
 
-      if (!this.formData.announcementType) {
-        this.errors.announcementType = 'Выберите тип объявления'
+      if (!this.formData.type) {
+        this.errors.type = 'Выберите тип объявления'
         isValid = false
       }
 
@@ -363,19 +451,23 @@ export default {
         isValid = false
       }
 
-      if (!this.formData.city.trim()) {
+      if (!this.formData.place.city.trim()) {
         this.errors.city = 'Город обязателен'
         isValid = false
       }
 
-      if (!this.formData.lostDate) {
-        this.errors.lostDate = 'Дата обязательна'
+      if (!this.formData.date) {
+        this.errors.date = 'Дата и время обязательны'
+        isValid = false
+      }
+
+      if (!this.formData.description.trim()) {
+        this.errors.description = 'Описание обязательно'
         isValid = false
       }
 
       return isValid
     },
-
 
     async handleSubmit() {
       if (!this.validateForm()) return
@@ -384,58 +476,35 @@ export default {
       this.successMessage = ''
       this.errorMessage = ''
 
-      console.log(this.formData.announcementType)
-      console.log(this.formData.announcementType === 'found')
-      console.log(this.formData.announcementType == 'found')
-
       try {
+        let thingId = this.announcementId
         const userId = localStorage.getItem('currentUserId')
-        const userName = localStorage.getItem('currentUser')
-        if (!userId) throw new Error('Пользователь не авторизован')
+        let version
 
-        const payload = {
-          title: this.formData.title,
-          category: this.formData.category || '',
-          description: this.formData.description || '',
-          city: this.formData.city,
-          address: this.formData.address || '',
-          lostDate: this.formData.lostDate,
-          color: this.formData.color || '',
-          reward: this.formData.reward || 0,
-          userId: userId,
-          userName: userName,
-          isFound: this.formData.announcementType === 'found'
+        // 1. Создаем или обновляем вещь
+        const thingPayload = this.buildThingPayload()
+
+        if (this.isEditMode) {
+          const result = await this.updateThing(userId, thingId, thingPayload)
+          version = result.version
+        } else {
+          const result = await this.createThing(userId, thingPayload)
+          thingId = result.id
+          version = result.version
         }
 
-        // Если есть фото, конвертируем в base64
-        if (this.formData.photo) {
-          const base64Photo = await this.convertFileToBase64(this.formData.photo)
-          payload.photoBase64 = base64Photo.split(',')[1] // Убираем префикс data:image/...
-          payload.photoName = this.formData.photo.name
-          payload.photoContentType = this.formData.photo.type
+        console.log("TEST")
+        console.log(this.selectedFile)
+        console.log(thingId)
+
+        // 2. Загружаем фото если есть
+        if (this.selectedFile && thingId) {
+          await this.uploadPhoto(userId, thingId, this.selectedFile, version)
         }
 
-        const url = this.isEditMode
-          ? `/announcements/${this.announcementId}`
-          : '/announcements'
+        console.log("TEST2")
 
-        const method = this.isEditMode ? 'PUT' : 'POST'
-
-        const response = await fetch(url, {
-          method: method,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        })
-
-        if (!response.ok) {
-          const error = await response.text()
-          throw new Error(error || 'Ошибка сервера')
-        }
-
-        const result = await response.json()
-
+        // 3. Показываем успешное сообщение
         this.successMessage = this.isEditMode
           ? 'Объявление успешно обновлено!'
           : 'Объявление успешно создано!'
@@ -453,20 +522,137 @@ export default {
       }
     },
 
+    buildThingPayload() {
+      const currentDate = new Date().toISOString()
+
+      // Базовые поля для описания
+      let description = this.formData.description
+
+      // Добавляем дополнительные детали в описание
+      const additionalDetails = []
+      if (this.formData.title) additionalDetails.push(`Название: ${this.formData.title}`)
+      if (this.formData.reward > 0) additionalDetails.push(`Вознаграждение: ${this.formData.reward} руб`)
+
+      if (additionalDetails.length > 0) {
+        description = additionalDetails.join('. ') + '. ' + description
+      }
+
+      if (this.isEditMode) {
+        // Режим редактирования
+        return {
+          owner: this.editingData.owner,
+          type: this.formData.type,
+          date: new Date(this.formData.date).toISOString(),
+          place: {
+            city: this.formData.place.city,
+            street: this.formData.place.street || '',
+            house: this.formData.place.house || '',
+            placeName: this.formData.place.placeName || '',
+            extraDescription: this.formData.place.extraDescription || ''
+          },
+          description: description,
+          photos: this.existingPhotos,
+          id: this.announcementId,
+          createdAt: this.editingData.createdAt,
+          completedAt: this.editingData.completedAt || null,
+          version: this.editingData.version || 0
+        }
+      } else {
+        // Режим создания
+        return {
+          type: this.formData.type,
+          date: new Date(this.formData.date).toISOString(),
+          place: {
+            city: this.formData.place.city,
+            street: this.formData.place.street || '',
+            house: this.formData.place.house || '',
+            placeName: this.formData.place.placeName || '',
+            extraDescription: this.formData.place.extraDescription || ''
+          },
+          description: description
+        }
+      }
+    },
+
+    async createThing(userId, payload) {
+      const response = await fetch('/api/things/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': userId
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Ошибка создания объявления')
+      }
+
+      return await response.json()
+    },
+
+    async updateThing(userId, thingId, payload) {
+      const response = await fetch(`/api/thing/${thingId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': userId
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Ошибка обновления объявления')
+      }
+
+      return await response.json()
+    },
+
+    async uploadPhoto(userId, thingId, file, version) {
+      const formData = new FormData()
+      formData.append('file', file)
+
+ console.log("uploadPhoto 1")
+
+      const response = await fetch(`/api/thing/${thingId}/upload-photo?version=${version}`, {
+        method: 'POST',
+        headers: {
+            'Authorization': userId
+        },
+        body: formData
+      })
+
+      console.log("uploadPhoto 2")
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Ошибка загрузки фото')
+      }
+
+      return await response.json()
+    },
+
     resetForm() {
       this.formData = {
-        announcementType: 'lost', // Сбрасываем к значению по умолчанию
+        type: 'LOST',
         title: '',
-        category: '',
         description: '',
-        city: '',
-        address: '',
-        lostDate: '',
-        color: '',
-        reward: 0,
-        photo: null
+        date: new Date().toISOString().slice(0, 16),
+        place: {
+          city: '',
+          street: '',
+          house: '',
+          placeName: '',
+          extraDescription: ''
+        },
+        reward: 0
       }
+      this.selectedFile = null
       this.photoPreview = null
+      this.existingPhotos = []
+      this.editingData = null
       this.errors = {}
       this.successMessage = ''
       this.errorMessage = ''
@@ -485,7 +671,7 @@ export default {
 <style scoped>
 .announcement-form-page {
   padding: 2rem;
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   min-height: 100vh;
 }
@@ -641,7 +827,8 @@ export default {
 }
 
 .form-group input.error,
-.form-group select.error {
+.form-group select.error,
+.form-group textarea.error {
   border-color: #ff4757;
   background-color: #fff5f5;
 }
@@ -709,9 +896,69 @@ export default {
   background: #ff3742;
 }
 
+.btn-remove-small {
+  background: #ff4757;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 1;
+}
+
+.btn-remove-small:hover {
+  background: #ff3742;
+}
+
+.existing-photos {
+  margin-top: 1rem;
+}
+
+.existing-photos h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #666;
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.photo-item {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .preview {
   margin-top: 1rem;
-  max-width: 200px;
+  max-width: 300px;
+}
+
+.preview h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #666;
 }
 
 .preview img {
@@ -822,6 +1069,15 @@ export default {
   .btn-primary, .btn-secondary, .btn-text {
     width: 100%;
     min-width: auto;
+  }
+
+  .photos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+
+  .photo-item {
+    width: 80px;
+    height: 80px;
   }
 }
 </style>
