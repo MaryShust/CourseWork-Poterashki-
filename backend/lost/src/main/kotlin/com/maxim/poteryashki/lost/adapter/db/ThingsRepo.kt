@@ -89,7 +89,7 @@ class ThingRepositoryImpl(
 
     override fun findAllByOwner(owner: UUID, pageable: Pageable): List<ThingEntity> {
         val esQuery = Q.term {
-            it.field("owner.keyword").value(FieldValue.of(owner.toString()))
+            it.field("owner").value(FieldValue.of(owner.toString()))
         }
         val query = NativeQuery.builder()
             .withQuery(esQuery)

@@ -165,26 +165,31 @@ class DefaultControllerDelegateImpl(
 
     @ExceptionHandler(ForbiddenModification::class)
     fun handleForbiddenModification(e: ForbiddenModification): ResponseEntity<ErrorResponse?> {
+        logger.error("ForbiddenModification: ",e)
         return ResponseEntity.status(403).body(e.toResponse())
     }
 
     @ExceptionHandler(ThingNotFoundException::class)
     fun handleThingNotFoundException(e: ThingNotFoundException): ResponseEntity<Unit> {
+        logger.error("ThingNotFoundException: ",e)
         return ResponseEntity.notFound().build()
     }
 
     @ExceptionHandler(ThingVersionMismatchException::class)
     fun handleThingVersionMismatchException(e: ThingVersionMismatchException): ResponseEntity<ErrorResponse?> {
+        logger.error("ThingVersionMismatchException: ",e)
         return ResponseEntity.status(409).body(e.toResponse())
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(e: IllegalArgumentException): ResponseEntity<ErrorResponse?> {
+        logger.error("IllegalArgumentException: ",e)
         return ResponseEntity.badRequest().body(e.toResponse())
     }
 
     @ExceptionHandler(Exception::class)
     fun handleException(e: Exception): ResponseEntity<ErrorResponse?> {
+        logger.error("Exception: ",e)
         return ResponseEntity.internalServerError().body(e.toResponse())
     }
 }
