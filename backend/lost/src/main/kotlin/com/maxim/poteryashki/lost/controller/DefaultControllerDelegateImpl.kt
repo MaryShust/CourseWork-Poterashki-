@@ -29,6 +29,22 @@ class DefaultControllerDelegateImpl(
     private val thingFinder: ThingFinder,
     private val tokenService: TokenService,
 ) : DefaultApiDelegate {
+    override fun completeThing(
+        id: String,
+        authorization: String
+    ): ResponseEntity<Unit> {
+        val user = tokenService.getUserByHeader(authorization)
+
+        if (user == null) {
+            logger.info("User not found for token: $authorization")
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        }
+
+        thingRegistry.complete(id, user.id!!)
+
+        return ResponseEntity.ok().build()
+    }
+
     override fun createThing(
         authorization: String,
         thingCreateDto: ThingCreateDto

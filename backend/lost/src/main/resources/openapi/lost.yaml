@@ -282,6 +282,27 @@ paths:
           description: Успешный отклик
         '404':
           description: Вещь не найдена
+  /thing/{id}/complete:
+    get:
+      summary: Заверщить
+      operationId: completeThing
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      responses:
+        '200':
+          description: Вещь заверщена
+        '404':
+          description: Вещь не найдена или не принадлежит пользователю
 
 
 components:
