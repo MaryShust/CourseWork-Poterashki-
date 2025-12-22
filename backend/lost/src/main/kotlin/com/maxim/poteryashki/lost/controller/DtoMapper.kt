@@ -72,6 +72,7 @@ fun Thing.toDto(phoneNumbers: List<String>) =
         owner = this.owner,
         date = this.date.toOffsetDateTime(),
         photos = this.photos.map { it.toUri() },
+        fee = this.fee,
         responses = phoneNumbers,
         createdAt = this.createdAt.toOffsetDateTime(),
         completedAt = this.completedAt?.toOffsetDateTime(),
