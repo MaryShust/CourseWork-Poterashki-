@@ -14,24 +14,26 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
 
-fun createPageable(page: Int = 0, size: Int = 20, sort: List<String>? = null): Pageable {
-    var pageable = PageRequest.of(page, size)
+fun createPageable(
+    page: Int = 0,
+    size: Int = 20,
+    sort: List<String>? = null
+): Pageable {
 
-    if (!sort.isNullOrEmpty()) {
-        val sortList = sort.map { sortString ->
-            if (sortString.contains(",desc", ignoreCase = true)) {
-                Sort.Order.desc(sortString.substringBefore(","))
-            } else if (sortString.contains(",asc", ignoreCase = true)) {
-                Sort.Order.asc(sortString.substringBefore(","))
-            } else {
-                Sort.Order.asc(sortString) // default: asc
-            }
-        }
-        pageable = PageRequest.of(page, size, Sort.by(sortList))
+    if (sort.isNullOrEmpty() || sort.all { it.isBlank() } || sort.size != 2) {
+        return PageRequest.of(page, size)
     }
 
-    return pageable
+    val field = sort[0]
+    val order = sort[1]
+
+    val direction = Sort.Direction.fromString(order)
+
+    val sorts = Sort.by(direction, field)
+
+    return PageRequest.of(page, size, sorts)
 }
+
 
 fun ThingTypeDto.toDomain() =
     when(this) {
