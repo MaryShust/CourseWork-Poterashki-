@@ -131,7 +131,8 @@ class DefaultControllerDelegateImpl(
             place = thingGetDto.place.toDomain(),
             description = thingGetDto.description,
             pageable = pageable
-        ).map { convertToDto(it) }
+        ).filter { it.owner != user.id }
+            .map { convertToDto(it) }
 
         return ResponseEntity.ok(response)
     }
