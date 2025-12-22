@@ -26,7 +26,7 @@
           <div class="title-section">
             <h1 class="announcement-title">{{ announcement.title }}</h1>
             <div class="status-badge" :class="announcement.isActive ? (announcement.isFound ? 'found' : 'active') : 'inactive'">
-              {{ announcement.isActive ? (announcement.isFound ? '🔍 Нашли' : '🔍 Ищут') : '✅ Найдено' }}
+              {{ announcement.isActive ? (announcement.isFound ? '🔍 Нашли' : '🔍 Ищут') : '🔍 Найдено' }}
             </div>
           </div>
 
@@ -273,7 +273,13 @@ export default {
           throw new Error('ID объявления не указан')
         }
 
-        const response = await fetch(`/announcements/${announcementId}`)
+        const response = await fetch(`/api/thing/${announcementId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': this.currentUserId
+            }
+        })
 
         if (!response.ok) {
           if (response.status === 404) {
