@@ -47,12 +47,18 @@ export default {
           place: {
             city: "Москва"
           },
-          type: "LOST",
-          date: "2025-12-21T17:44:58.370Z",
-          completed: false
+          completed: false,
+          description: "test"
         }
 
-        const url = `/api/things?page=0&size=10&sort=date,desc`
+        // Строим query параметры
+        const queryParams = new URLSearchParams()
+        queryParams.append('page', 0)
+        queryParams.append('size', 20)
+        // Добавляем сортировку по дате создания (новые сначала)
+        queryParams.append('sort', 'createdAt,desc')
+
+        const url = `/api/things?${queryParams.toString()}`
         const userId = localStorage.getItem('currentUserId')
 
         const response = await fetch(url, {

@@ -280,6 +280,7 @@ export default {
     },
 
     viewDetails(id) {
+      localStorage.setItem('isMyDetails', false)
       this.$router.push({
         path: '/details',
         query: {
