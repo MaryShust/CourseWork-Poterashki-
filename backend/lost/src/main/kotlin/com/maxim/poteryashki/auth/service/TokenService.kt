@@ -29,8 +29,8 @@ class TokenService(
         return userDao.getById(token.userId)
     }
 
-    fun getPhoneNumberById(userId: UUID) =
-        userDao.getById(userId)?.metadata?.phone
+    fun getUserById(userId: UUID) =
+        userDao.getById(userId)
 
     fun generateToken(userId: UUID): String {
         val random = SecureRandom(userId.toString().toByteArray())

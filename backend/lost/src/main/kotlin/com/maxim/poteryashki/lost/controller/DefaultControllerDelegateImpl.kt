@@ -20,7 +20,6 @@ import org.springframework.util.StringUtils
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.ExceptionHandler
-import java.util.UUID
 
 private val logger = LoggerFactory.getLogger(DefaultControllerDelegateImpl::class.java)
 
@@ -251,9 +250,10 @@ class DefaultControllerDelegateImpl(
     }
 
     private fun convertToDto(thing: Thing): ThingDto {
-        val phoneNumbers = thing.responses
-            ?.mapNotNull { tokenService.getPhoneNumberById(it) }
+        val profiles = thing.responses
+            ?.mapNotNull { tokenService.getUserById(it) }
+            ?.map { it.toShortenedProfile() }
 
-        return thing.toDto(phoneNumbers ?: emptyList())
+        return thing.toDto(profiles ?: emptyList())
     }
 }

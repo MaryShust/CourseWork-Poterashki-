@@ -1,9 +1,11 @@
 package com.maxim.poteryashki.lost.controller
 
+import com.maxim.poteryashki.auth.domain.User
 import com.maxim.poteryashki.lost.domain.Place
 import com.maxim.poteryashki.lost.domain.Thing
 import com.maxim.poteryashki.lost.domain.ThingType
 import com.maxim.poteryashki.lost.dto.PlaceDto
+import com.maxim.poteryashki.lost.dto.ShortenedUserProfile
 import com.maxim.poteryashki.lost.dto.ThingDto
 import com.maxim.poteryashki.lost.dto.ThingTypeDto
 import org.springframework.data.domain.PageRequest
@@ -65,7 +67,15 @@ fun Place.toDto() =
         extraDescription = this.extraDescription,
     )
 
-fun Thing.toDto(phoneNumbers: List<String>) =
+fun User.toShortenedProfile() =
+    ShortenedUserProfile(
+        email = this.email,
+        phone = this.metadata?.phone,
+        username = this.name
+    )
+
+
+fun Thing.toDto(profiles: List<ShortenedUserProfile>) =
     ThingDto(
         id = this.id,
         description = this.description,
@@ -75,7 +85,7 @@ fun Thing.toDto(phoneNumbers: List<String>) =
         date = this.date.toOffsetDateTime(),
         photos = this.photos.map { it.toUri() },
         fee = this.fee,
-        responses = phoneNumbers,
+        responses = profiles,
         createdAt = this.createdAt.toOffsetDateTime(),
         completedAt = this.completedAt?.toOffsetDateTime(),
         title = title,
