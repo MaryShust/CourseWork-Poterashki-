@@ -18,7 +18,7 @@ fun ThingDomain.toEntity(): ThingEntity =
         description = description,
         photos = photos,
         completedAt = completedAt,
-        responses = responses,
+        responses = responses?.toList(),
         fee = fee,
         version = version
     )
@@ -50,7 +50,7 @@ fun ThingEntity.toDomain(): ThingDomain =
         description = description,
         photos = photos,
         completedAt = completedAt,
-        responses = responses,
+        responses = responses?.toSet(),
         fee = fee,
         version = version
     )

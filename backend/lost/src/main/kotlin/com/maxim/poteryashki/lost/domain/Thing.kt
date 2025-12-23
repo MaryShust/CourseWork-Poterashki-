@@ -32,7 +32,7 @@ data class Thing(
     /**
      * id тех кто откликнулся
      */
-    val responses: List<UUID>?,
+    val responses: Set<UUID>?,
 
     /**
      * Сумма вознаграждения

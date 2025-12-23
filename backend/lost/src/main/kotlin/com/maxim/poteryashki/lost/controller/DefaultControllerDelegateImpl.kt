@@ -1,5 +1,6 @@
 package com.maxim.poteryashki.lost.controller
 
+import com.maxim.poteryashki.auth.domain.User
 import com.maxim.poteryashki.auth.service.TokenService
 import com.maxim.poteryashki.lost.api.DefaultApiDelegate
 import com.maxim.poteryashki.lost.domain.Thing
@@ -7,10 +8,12 @@ import com.maxim.poteryashki.lost.domain.exception.ForbiddenModification
 import com.maxim.poteryashki.lost.domain.exception.ThingNotFoundException
 import com.maxim.poteryashki.lost.domain.exception.ThingVersionMismatchException
 import com.maxim.poteryashki.lost.dto.ErrorResponse
+import com.maxim.poteryashki.lost.dto.GetThingByOwner200Response
 import com.maxim.poteryashki.lost.dto.GetThings200Response
 import com.maxim.poteryashki.lost.dto.ThingDto
 import com.maxim.poteryashki.lost.dto.ThingCreateDto
 import com.maxim.poteryashki.lost.dto.ThingGetDto
+import com.maxim.poteryashki.lost.dto.ThingSearchDto
 import com.maxim.poteryashki.lost.service.ThingFinder
 import com.maxim.poteryashki.lost.service.ThingRegistry
 import org.slf4j.LoggerFactory
@@ -82,7 +85,7 @@ class DefaultControllerDelegateImpl(
 
         val thing = thingFinder.findById(id, user.id) ?: throw ThingNotFoundException(id)
 
-        val updated = convertToDto(thing)
+        val updated = convertToDto(thing, user)
 
         return ResponseEntity.ok(updated)
     }
@@ -92,7 +95,7 @@ class DefaultControllerDelegateImpl(
         page: Int,
         size: Int,
         sort: List<String>?
-    ): ResponseEntity<GetThings200Response> {
+    ): ResponseEntity<GetThingByOwner200Response> {
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
@@ -106,8 +109,8 @@ class DefaultControllerDelegateImpl(
         )
 
         return ResponseEntity.ok(
-            GetThings200Response(
-                page.hints.map { convertToDto(it) },
+            GetThingByOwner200Response(
+                page.hints.map { convertToDto(it, user) },
                 page.total.toInt()
             )
         )
@@ -150,7 +153,11 @@ class DefaultControllerDelegateImpl(
                     false
                 }
             }
-            .map { convertToDto(it) }
+            .map { it to thingFinder.userAlreadyResponded(it, user.id) }
+            .map { (thing, already) ->
+                convertToDto(thing, user) to already
+            }
+            .map { ThingSearchDto(it.first, it.second) }
 
         return ResponseEntity.ok(GetThings200Response(converted, page.total.toInt() - counter))
     }
@@ -249,8 +256,9 @@ class DefaultControllerDelegateImpl(
         return ResponseEntity.internalServerError().body(e.toResponse())
     }
 
-    private fun convertToDto(thing: Thing): ThingDto {
-        val profiles = thing.responses
+    private fun convertToDto(thing: Thing, user: User): ThingDto {
+        val profiles = thingFinder.hideResponses(thing, user.id!!)
+            .responses
             ?.mapNotNull { tokenService.getUserById(it) }
             ?.map { it.toShortenedProfile() }
 

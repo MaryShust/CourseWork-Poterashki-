@@ -37,7 +37,7 @@ class ThingFinder(
         )
 
         return page.copy(
-            hints = page.hints.map { hideResponses(it, userId) }
+            hints = page.hints
         )
     }
 
@@ -45,18 +45,17 @@ class ThingFinder(
         val page = thingDao.findAllByOwner(owner, pageable)
 
         return page.copy(
-            hints = page.hints.map { hideResponses(it, owner) }
+            hints = page.hints
         )
     }
 
     fun findById(id: String, user: UUID): Thing? =
         thingDao.getById(id)
-            ?.let { hideResponses(it, user) }
 
     fun existsById(id: String): Boolean =
         thingDao.existsById(id)
 
-    private fun hideResponses(thing: Thing, user: UUID) =
+    fun hideResponses(thing: Thing, user: UUID) =
         if (thing.owner != user) {
             thing.copy(responses = null)
         } else if (thing.completedAt != null){
@@ -64,4 +63,7 @@ class ThingFinder(
         } else {
             thing
         }
+
+    fun userAlreadyResponded(thing: Thing, user: UUID) =
+        thing.responses?.contains(user) ?: false
 }

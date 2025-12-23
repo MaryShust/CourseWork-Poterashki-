@@ -134,7 +134,7 @@ class ThingRegistry(
             throw ThingNotFoundException(thingId)
         }
 
-        val existingResponses = existing.responses ?: mutableListOf()
+        val existingResponses = (existing.responses ?: emptySet()).toMutableSet()
 
         val updated = existingResponses + userId
 
