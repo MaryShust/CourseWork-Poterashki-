@@ -2,9 +2,12 @@ package com.maxim.poteryashki.lost.adapter.db
 
 import co.elastic.clients.elasticsearch._types.FieldValue
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import co.elastic.clients.elasticsearch._types.query_dsl.Query as EsQuery
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders as Q
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
 import org.springframework.data.elasticsearch.core.query.Criteria
@@ -23,9 +26,9 @@ data class ThingFilter(
 )
 
 interface ThingRepository {
-    fun findAllBy(filter: ThingFilter, pageable: Pageable): List<ThingEntity>
+    fun findAllBy(filter: ThingFilter, pageable: Pageable): Pair<List<ThingEntity>, Long>
 
-    fun findAllByOwner(owner: UUID, pageable: Pageable): List<ThingEntity>
+    fun findAllByOwner(owner: UUID, pageable: Pageable): Pair<List<ThingEntity>, Long>
 
     fun create(thingEntity: ThingEntity): ThingEntity
 
@@ -45,7 +48,7 @@ class ThingRepositoryImpl(
     /**
      * Поиск вещей по всем указаным параметрам
      */
-    override fun findAllBy(filter: ThingFilter, pageable: Pageable): List<ThingEntity> {
+    override fun findAllBy(filter: ThingFilter, pageable: Pageable): Pair<List<ThingEntity>, Long> {
 
         val typeQuery = queryIfNotNull(filter.type) { type ->
             Q.term {
@@ -86,15 +89,19 @@ class ThingRepositoryImpl(
             .build()
 
         val hits = operations.search(query, ThingEntity::class.java)
-        return hits.map { it.content }.toList()
+        val total = hits.totalHits
+
+        return hits.map { it.content }.toList() to total
     }
 
-    override fun findAllByOwner(owner: UUID, pageable: Pageable): List<ThingEntity> {
+    override fun findAllByOwner(owner: UUID, pageable: Pageable): Pair<List<ThingEntity>, Long> {
         val criteria = Criteria("owner").`is`(owner)
         val query = CriteriaQuery(criteria)
 
         val hits = operations.search(query, ThingEntity::class.java)
-        return hits.map { it.content }.toList()
+        val total = hits.totalHits
+
+        return hits.map { it.content }.toList() to total
     }
 
     override fun getById(id: String): ThingEntity? {

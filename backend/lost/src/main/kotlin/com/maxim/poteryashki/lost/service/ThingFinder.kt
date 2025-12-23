@@ -1,5 +1,6 @@
 package com.maxim.poteryashki.lost.service
 
+import com.maxim.poteryashki.lost.adapter.db.Page
 import com.maxim.poteryashki.lost.adapter.db.ThingDao
 import com.maxim.poteryashki.lost.domain.Place
 import com.maxim.poteryashki.lost.domain.Thing
@@ -24,18 +25,27 @@ class ThingFinder(
         place: Place,
         description: String?,
         pageable: Pageable,
-    ): List<Thing> =
-        thingDao.findAllBy(
+    ): Page {
+        val page = thingDao.findAllBy(
             type = type,
             date = date,
             place = place,
             description = description,
             pageable = pageable
         )
-            .map { hideResponses(it, userId ) }
 
-    fun findByOwner(owner: UUID, pageable: Pageable): List<Thing> =
-        thingDao.findAllByOwner(owner, pageable)
+        return page.copy(
+            hints = page.hints.map { hideResponses(it, userId) }
+        )
+    }
+
+    fun findByOwner(owner: UUID, pageable: Pageable): Page{
+        val page = thingDao.findAllByOwner(owner, pageable)
+
+        return page.copy(
+            hints = page.hints.map { hideResponses(it, owner) }
+        )
+    }
 
     fun findById(id: String, user: UUID): Thing? =
         thingDao.getById(id)
@@ -46,6 +56,8 @@ class ThingFinder(
 
     private fun hideResponses(thing: Thing, user: UUID) =
         if (thing.owner != user) {
+            thing.copy(responses = null)
+        } else if (thing.completedAt != null){
             thing.copy(responses = null)
         } else {
             thing

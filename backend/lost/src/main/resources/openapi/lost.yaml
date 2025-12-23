@@ -63,9 +63,15 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ThingDto'
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ThingDto'
+                  total:
+                    type: integer
+                    description: Общее количество вещей
         '400':
           description: Неверный запрос
           content:
@@ -103,9 +109,15 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ThingDto'
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ThingDto'
+                  total:
+                    type: integer
+                    description: Общее количество вещей
         '404':
           description: Пользователь не найден
   /thing/{id}:

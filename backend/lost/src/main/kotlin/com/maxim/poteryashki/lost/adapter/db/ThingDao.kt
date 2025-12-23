@@ -19,8 +19,8 @@ class ThingDao(
         place: Place,
         description: String?,
         pageable: Pageable
-    ): List<Thing> =
-        thingRepository.findAllBy(
+    ): Page {
+        val (hints, total) = thingRepository.findAllBy(
             ThingFilter(
                 type = type?.toEntity(),
                 date = date,
@@ -28,12 +28,15 @@ class ThingDao(
                 description = description,
             ), pageable
         )
-            .map { it.toDomain() }
 
+        return Page(hints.map { it.toDomain() }, total)
+    }
 
-    fun findAllByOwner(owner: UUID, pageable: Pageable): List<Thing> =
-        thingRepository.findAllByOwner(owner, pageable)
-            .map { it.toDomain() }
+    fun findAllByOwner(owner: UUID, pageable: Pageable): Page {
+        val (hints, total) = thingRepository.findAllByOwner(owner, pageable)
+
+        return Page(hints.map { it.toDomain() }, total)
+    }
 
     fun create(thing: Thing) =
         thingRepository.create(thing.toEntity())
@@ -45,5 +48,9 @@ class ThingDao(
 
     fun existsById(id: String): Boolean = thingRepository.existsById(id)
 
-
 }
+
+data class Page(
+    val hints: List<Thing>,
+    val total: Long
+)

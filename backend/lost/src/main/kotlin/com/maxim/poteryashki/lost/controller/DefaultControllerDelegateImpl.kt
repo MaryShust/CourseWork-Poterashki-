@@ -7,6 +7,7 @@ import com.maxim.poteryashki.lost.domain.exception.ForbiddenModification
 import com.maxim.poteryashki.lost.domain.exception.ThingNotFoundException
 import com.maxim.poteryashki.lost.domain.exception.ThingVersionMismatchException
 import com.maxim.poteryashki.lost.dto.ErrorResponse
+import com.maxim.poteryashki.lost.dto.GetThings200Response
 import com.maxim.poteryashki.lost.dto.ThingDto
 import com.maxim.poteryashki.lost.dto.ThingCreateDto
 import com.maxim.poteryashki.lost.dto.ThingGetDto
@@ -92,7 +93,7 @@ class DefaultControllerDelegateImpl(
         page: Int,
         size: Int,
         sort: List<String>?
-    ): ResponseEntity<List<ThingDto>> {
+    ): ResponseEntity<GetThings200Response> {
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
@@ -100,12 +101,17 @@ class DefaultControllerDelegateImpl(
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
-        val response = thingFinder.findByOwner(
+        val page = thingFinder.findByOwner(
             owner = user.id!!,
             pageable = createPageable(page, size, sort)
-        ).map { convertToDto(it) }
+        )
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(
+            GetThings200Response(
+                page.hints.map { convertToDto(it) },
+                page.total.toInt()
+            )
+        )
     }
 
 
@@ -115,7 +121,7 @@ class DefaultControllerDelegateImpl(
         page: Int,
         size: Int,
         sort: List<String>?
-    ): ResponseEntity<List<ThingDto>> {
+    ): ResponseEntity<GetThings200Response> {
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null || user.id == null) {
@@ -124,17 +130,20 @@ class DefaultControllerDelegateImpl(
         }
 
         val pageable = createPageable(page, size, sort)
-        val response = thingFinder.find(
+        val page = thingFinder.find(
             userId = user.id,
             type = thingGetDto.type?.toDomain(),
             date = thingGetDto.date?.toInstant(),
             place = thingGetDto.place.toDomain(),
             description = thingGetDto.description,
             pageable = pageable
-        ).filter { it.owner != user.id }
+        )
+
+        val converted = page.hints
+            .filter { it.owner != user.id }
             .map { convertToDto(it) }
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(GetThings200Response(converted, page.total.toInt()))
     }
 
     override fun responseToThing(
@@ -203,31 +212,31 @@ class DefaultControllerDelegateImpl(
 
     @ExceptionHandler(ForbiddenModification::class)
     fun handleForbiddenModification(e: ForbiddenModification): ResponseEntity<ErrorResponse?> {
-        logger.error("ForbiddenModification: ",e)
+        logger.error("ForbiddenModification: ", e)
         return ResponseEntity.status(403).body(e.toResponse())
     }
 
     @ExceptionHandler(ThingNotFoundException::class)
     fun handleThingNotFoundException(e: ThingNotFoundException): ResponseEntity<Unit> {
-        logger.error("ThingNotFoundException: ",e)
+        logger.error("ThingNotFoundException: ", e)
         return ResponseEntity.notFound().build()
     }
 
     @ExceptionHandler(ThingVersionMismatchException::class)
     fun handleThingVersionMismatchException(e: ThingVersionMismatchException): ResponseEntity<ErrorResponse?> {
-        logger.error("ThingVersionMismatchException: ",e)
+        logger.error("ThingVersionMismatchException: ", e)
         return ResponseEntity.status(409).body(e.toResponse())
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleIllegalArgumentException(e: IllegalArgumentException): ResponseEntity<ErrorResponse?> {
-        logger.error("IllegalArgumentException: ",e)
+        logger.error("IllegalArgumentException: ", e)
         return ResponseEntity.badRequest().body(e.toResponse())
     }
 
     @ExceptionHandler(Exception::class)
     fun handleException(e: Exception): ResponseEntity<ErrorResponse?> {
-        logger.error("Exception: ",e)
+        logger.error("Exception: ", e)
         return ResponseEntity.internalServerError().body(e.toResponse())
     }
 
