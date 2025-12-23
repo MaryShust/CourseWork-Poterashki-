@@ -91,6 +91,10 @@ class ThingRegistry(
         val updated = existing.copy(completedAt = Instant.now()).incrementVersion()
 
         thingDao.update(updated)
+
+        statisticsService.incrementFound(actor)
+        statisticsService.decrementActive(actor)
+        statisticsService.addFee(updated.fee ?: 0, actor)
     }
 
 

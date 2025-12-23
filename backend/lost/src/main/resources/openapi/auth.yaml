@@ -216,11 +216,16 @@ components:
     GetTokenResponse:
       type: object
       properties:
+        username:
+          type: string
+          example: user123
+          description: Имя пользователя
         token:
           type: string
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxx"
           description: Токен авторизации
       required:
+        - username
         - token
 
     TokenRequest:

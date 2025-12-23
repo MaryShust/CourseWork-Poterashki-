@@ -26,10 +26,10 @@ interface UserRepository : CrudRepository<UserDb, UUID> {
         """
     INSERT INTO users (username, email, password, data, created_at) 
     VALUES (:name, :email, :password, :metadata, :createdAt) 
-    RETURNING id;
+    RETURNING *;
     """
     )
-    fun create(name: String, email: String, password: String, metadata: String, createdAt: Instant): UUID
+    fun create(name: String, email: String, password: String, metadata: String, createdAt: Instant): UserDb
 
     @Query(
         """

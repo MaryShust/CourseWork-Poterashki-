@@ -12,14 +12,14 @@ class UserDao(
     private val userRepository: UserRepository
 ) {
 
-    fun create(user: User): UUID = userRepository
+    fun create(user: User) = userRepository
         .create(
             user.name,
             user.email,
             user.password,
             objectMapper.writeValueAsString(user.metadata),
             user.createdAt
-        )
+        ).toDomain()
 
     fun update(user: User) =
         userRepository.update(

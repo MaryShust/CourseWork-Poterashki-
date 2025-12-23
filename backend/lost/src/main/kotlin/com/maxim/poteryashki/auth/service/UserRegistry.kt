@@ -26,8 +26,8 @@ class UserRegistry(
         username: String,
         email: String,
         password: String,
-    ): UUID {
-        val userId = userDao.create(User(
+    ): User {
+        val user = userDao.create(User(
             id = null,
             name = username,
             email = email,
@@ -35,9 +35,9 @@ class UserRegistry(
             metadata = null
         ))
 
-        statisticsDao.save(Statistics(0, 0, 0, 0), userId)
+        statisticsDao.save(Statistics(0, 0, 0, 0), user.id!!)
 
-        return userId
+        return user
     }
 
     /**
@@ -47,8 +47,8 @@ class UserRegistry(
     fun getUser(
         email: String,
         password: String,
-    ): UUID? {
-        return userDao.getByEmail(email, password)?.id
+    ): User? {
+        return userDao.getByEmail(email, password)
     }
 
     fun update(
