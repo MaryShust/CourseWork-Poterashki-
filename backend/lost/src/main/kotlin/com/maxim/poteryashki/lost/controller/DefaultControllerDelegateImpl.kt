@@ -129,6 +129,8 @@ class DefaultControllerDelegateImpl(
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
+        var counter = 0
+
         val pageable = createPageable(page, size, sort)
         val page = thingFinder.find(
             userId = user.id,
@@ -136,14 +138,22 @@ class DefaultControllerDelegateImpl(
             date = thingGetDto.date?.toInstant(),
             place = thingGetDto.place.toDomain(),
             description = thingGetDto.description,
+            completed = thingGetDto.completed,
             pageable = pageable
         )
 
         val converted = page.hints
-            .filter { it.owner != user.id }
+            .filter {
+                if (it.owner != user.id) {
+                    true
+                } else {
+                    counter++
+                    false
+                }
+            }
             .map { convertToDto(it) }
 
-        return ResponseEntity.ok(GetThings200Response(converted, page.total.toInt()))
+        return ResponseEntity.ok(GetThings200Response(converted, page.total.toInt() - counter))
     }
 
     override fun responseToThing(

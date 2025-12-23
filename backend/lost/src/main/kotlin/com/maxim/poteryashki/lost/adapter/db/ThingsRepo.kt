@@ -126,8 +126,8 @@ class ThingRepositoryImpl(
         value?.let { query(it) }
 
     private fun completedQuery(completed: Boolean?): EsQuery? =
-        queryIfNotNull(completed) {
-            if (it) {
+        queryIfNotNull(completed) { value ->
+            if (value) {
                 Q.exists {
                     it.field("completedAt")
                 }

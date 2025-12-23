@@ -24,6 +24,7 @@ class ThingFinder(
         date: Instant?,
         place: Place,
         description: String?,
+        completed: Boolean?,
         pageable: Pageable,
     ): Page {
         val page = thingDao.findAllBy(
@@ -31,6 +32,7 @@ class ThingFinder(
             date = date,
             place = place,
             description = description,
+            completed = completed,
             pageable = pageable
         )
 

@@ -18,6 +18,7 @@ class ThingDao(
         date: Instant?,
         place: Place,
         description: String?,
+        completed: Boolean?,
         pageable: Pageable
     ): Page {
         val (hints, total) = thingRepository.findAllBy(
@@ -26,6 +27,7 @@ class ThingDao(
                 date = date,
                 place = place.toEntity(),
                 description = description,
+                completed = completed
             ), pageable
         )
 
