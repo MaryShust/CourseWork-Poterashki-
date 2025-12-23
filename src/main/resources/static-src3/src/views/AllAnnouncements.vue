@@ -8,13 +8,16 @@
     <div class="page-content">
       <AnnouncementsList
         :announcements="allAnnouncements"
+        :totalPages="totalPages"
+        :totalCount="totalCount"
         :loading="loading"
         :show-filters="true"
         :show-stats="true"
         :show-create-button="false"
         :show-edit-button="false"
         :show-pagination="true"
-        @filters-changed="handleFiltersChanged"
+        @apply-filters="handleApplyFilters"
+        @clear-filters="handleClearFilters"
       />
     </div>
   </div>
@@ -32,34 +35,67 @@ export default {
     return {
       loading: false,
       allAnnouncements: [],
-      filters: {}
+      totalPages: 0,
+      totalCount: 0,
+      filters: {},
+      currentPage: 0,
+      pageSize: 10
     }
   },
   mounted() {
-    this.loadAllAnnouncements()
+    const filters = {
+        title: 'зонт',
+        place: {
+            city: 'Москва'
+        }
+    }
+    this.loadAllAnnouncements(this.currentPage, filters)
   },
   methods: {
-    async loadAllAnnouncements() {
+    async loadAllAnnouncements(currentPage, filters = {}) {
       this.loading = true
       try {
+        // Базовый requestBody
+        const requestBody = {}
 
-        const requestBody = {
-          place: {
-            city: "Москва"
-          },
-          completed: false,
-          description: "test"
+        // Добавляем только заполненные фильтры
+        if (filters.title) {
+          requestBody.title = filters.title
+          requestBody.description = filters.title
+        }
+
+        if (filters.place && filters.place.city) {
+          requestBody.place = {
+            city: filters.place.city
+          }
+        }
+
+        if (filters.completed !== undefined) {
+          requestBody.completed = filters.completed
+        }
+
+        if (filters.date) {
+          requestBody.date = filters.date
+        }
+
+        if (filters.createdAt) {
+          requestBody.createdAt = filters.createdAt
+        }
+
+        if (filters.hasFee !== undefined) {
+          requestBody.hasFee = filters.hasFee
         }
 
         // Строим query параметры
         const queryParams = new URLSearchParams()
-        queryParams.append('page', 0)
-        queryParams.append('size', 20)
-        // Добавляем сортировку по дате создания (новые сначала)
+        queryParams.append('page', currentPage)
+        queryParams.append('size', this.pageSize)
         queryParams.append('sort', 'createdAt,desc')
 
         const url = `/api/things?${queryParams.toString()}`
         const userId = localStorage.getItem('currentUserId')
+
+        console.log('Отправляем запрос с фильтрами:', requestBody)
 
         const response = await fetch(url, {
           method: 'POST',
@@ -72,9 +108,11 @@ export default {
 
         if (response.ok) {
           this.allAnnouncements = await response.json()
+          this.totalCount = 17
+          this.totalPages = Math.ceil(this.totalCount / this.pageSize)
+        } else {
+          console.error('Ошибка загрузки:', response.status)
         }
-
-        console.log('📋 Загружено всех объявлений:', this.allAnnouncements.length)
       } catch (error) {
         console.error('Ошибка загрузки:', error)
       } finally {
@@ -82,9 +120,17 @@ export default {
       }
     },
 
-    handleFiltersChanged(filters) {
+    handleApplyFilters(filters) {
       this.filters = filters
-      console.log('Фильтры изменены:', filters)
+      this.currentPage = 0
+      console.log('Применяем фильтры:', filters)
+      this.loadAllAnnouncements(this.currentPage, filters)
+    },
+
+    handleClearFilters() {
+      this.filters = {}
+      this.currentPage = 0
+      console.log('Сбрасываем фильтры')
     }
   }
 }
