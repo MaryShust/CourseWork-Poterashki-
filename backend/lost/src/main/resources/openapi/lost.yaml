@@ -68,7 +68,7 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ThingDto'
+                      $ref: '#/components/schemas/ThingSearchDto'
                   total:
                     type: integer
                     description: Общее количество вещей
@@ -472,6 +472,16 @@ components:
           format: int64
           description: Версия записи (для обеспечения согласованности)
           example: 1
+
+    ThingSearchDto:
+      type: object
+      properties:
+        item:
+          $ref: '#/components/schemas/ThingDto'
+        alreadyResponded:
+          type: boolean
+          description: Указывает откликнулся ли этот конкретный пользователь на эту картинку
+
 
     ThingTypeDto:
       type: string
