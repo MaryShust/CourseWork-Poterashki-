@@ -33,7 +33,8 @@ class ThingFinder(
             place = place,
             description = description,
             completed = completed,
-            pageable = pageable
+            pageable = pageable,
+            userId
         )
 
         return page.copy(

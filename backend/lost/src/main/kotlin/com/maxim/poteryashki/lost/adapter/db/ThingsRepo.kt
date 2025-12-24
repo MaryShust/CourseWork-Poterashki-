@@ -26,7 +26,7 @@ data class ThingFilter(
 )
 
 interface ThingRepository {
-    fun findAllBy(filter: ThingFilter, pageable: Pageable): Pair<List<ThingEntity>, Long>
+    fun findAllBy(filter: ThingFilter, owner: UUID, pageable: Pageable): Pair<List<ThingEntity>, Long>
 
     fun findAllByOwner(owner: UUID, pageable: Pageable): Pair<List<ThingEntity>, Long>
 
@@ -48,12 +48,20 @@ class ThingRepositoryImpl(
     /**
      * Поиск вещей по всем указаным параметрам
      */
-    override fun findAllBy(filter: ThingFilter, pageable: Pageable): Pair<List<ThingEntity>, Long> {
+    override fun findAllBy(filter: ThingFilter, owner: UUID, pageable: Pageable): Pair<List<ThingEntity>, Long> {
 
         val typeQuery = queryIfNotNull(filter.type) { type ->
             Q.term {
                 it.field("type.keyword").value(FieldValue.of(type.name))
             }
+        }
+
+        val filterUser = Q.bool {
+            it.mustNot(
+                Q.term {
+                    it.field("owner.keyword").value(FieldValue.of(owner.toString()))
+                }
+            )
         }
 
         val dateQuery = dateQuery(filter.date)
@@ -71,8 +79,10 @@ class ThingRepositoryImpl(
         val placeQuery = placeQuery(filter.place)
 
         val filterQuery = listOfNotNull(
+            filterUser,
             typeQuery,
             completedQuery,
+
         )
 
         val mustQuery = listOfNotNull(

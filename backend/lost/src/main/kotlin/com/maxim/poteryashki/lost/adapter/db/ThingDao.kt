@@ -19,7 +19,8 @@ class ThingDao(
         place: Place,
         description: String?,
         completed: Boolean?,
-        pageable: Pageable
+        pageable: Pageable,
+        owner: UUID
     ): Page {
         val (hints, total) = thingRepository.findAllBy(
             ThingFilter(
@@ -28,7 +29,7 @@ class ThingDao(
                 place = place.toEntity(),
                 description = description,
                 completed = completed
-            ), pageable
+            ), owner, pageable
         )
 
         return Page(hints.map { it.toDomain() }, total)

@@ -75,7 +75,7 @@ class DefaultControllerDelegateImpl(
     override fun getThingById(
         id: String,
         authorization: String
-    ): ResponseEntity<ThingDto> {
+    ): ResponseEntity<ThingSearchDto> {
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null || user.id == null) {
@@ -86,8 +86,11 @@ class DefaultControllerDelegateImpl(
         val thing = thingFinder.findById(id, user.id) ?: throw ThingNotFoundException(id)
 
         val updated = convertToDto(thing, user)
+        val userAlreadyResponded = thingFinder.userAlreadyResponded(thing, user.id)
 
-        return ResponseEntity.ok(updated)
+        val dto = updated.toSearchDto(userAlreadyResponded)
+
+        return ResponseEntity.ok(dto)
     }
 
     override fun getThingByOwner(
@@ -95,7 +98,7 @@ class DefaultControllerDelegateImpl(
         page: Int,
         size: Int,
         sort: List<String>?
-    ): ResponseEntity<GetThingByOwner200Response> {
+    ): ResponseEntity<GetThings200Response> {
         val user = tokenService.getUserByHeader(authorization)
 
         if (user == null) {
@@ -109,7 +112,7 @@ class DefaultControllerDelegateImpl(
         )
 
         return ResponseEntity.ok(
-            GetThingByOwner200Response(
+            GetThings200Response(
                 page.hints.map { convertToDto(it, user) },
                 page.total.toInt()
             )
@@ -131,8 +134,6 @@ class DefaultControllerDelegateImpl(
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
 
-        var counter = 0
-
         val pageable = createPageable(page, size, sort)
         val page = thingFinder.find(
             userId = user.id,
@@ -145,21 +146,11 @@ class DefaultControllerDelegateImpl(
         )
 
         val converted = page.hints
-            .filter {
-                if (it.owner != user.id) {
-                    true
-                } else {
-                    counter++
-                    false
-                }
+            .map { thing ->
+                convertToDto(thing, user)
             }
-            .map { it to thingFinder.userAlreadyResponded(it, user.id) }
-            .map { (thing, already) ->
-                convertToDto(thing, user) to already
-            }
-            .map { ThingSearchDto(it.first, it.second) }
 
-        return ResponseEntity.ok(GetThings200Response(converted, page.total.toInt() - counter))
+        return ResponseEntity.ok(GetThings200Response(converted, page.total.toInt()))
     }
 
     override fun responseToThing(

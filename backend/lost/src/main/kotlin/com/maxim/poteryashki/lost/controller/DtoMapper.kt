@@ -7,6 +7,7 @@ import com.maxim.poteryashki.lost.domain.ThingType
 import com.maxim.poteryashki.lost.dto.PlaceDto
 import com.maxim.poteryashki.lost.dto.ShortenedUserProfile
 import com.maxim.poteryashki.lost.dto.ThingDto
+import com.maxim.poteryashki.lost.dto.ThingSearchDto
 import com.maxim.poteryashki.lost.dto.ThingTypeDto
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -36,6 +37,24 @@ fun createPageable(
     return PageRequest.of(page, size, sorts)
 }
 
+
+fun ThingDto.toSearchDto(userResponded: Boolean) =
+    ThingSearchDto(
+        id = this.id,
+        type = this.type,
+        date = this.date,
+        place = this.place,
+        description = this.description,
+        owner = this.owner,
+        title = this.title,
+        photos = this.photos,
+        createdAt = this.createdAt,
+        fee = this.fee,
+        responses = this.responses,
+        completedAt = this.completedAt,
+        version = this.version,
+        alreadyResponded = userResponded
+    )
 
 fun ThingTypeDto.toDomain() =
     when(this) {

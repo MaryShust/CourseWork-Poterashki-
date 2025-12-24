@@ -68,7 +68,7 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ThingSearchDto'
+                      $ref: '#/components/schemas/ThingDto'
                   total:
                     type: integer
                     description: Общее количество вещей
@@ -142,7 +142,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ThingDto'
+                $ref: '#/components/schemas/ThingSearchDto'
         '404':
           description: Вещь не найдена
     post:
@@ -474,13 +474,15 @@ components:
           example: 1
 
     ThingSearchDto:
-      type: object
-      properties:
-        item:
-          $ref: '#/components/schemas/ThingDto'
-        alreadyResponded:
-          type: boolean
-          description: Указывает откликнулся ли этот конкретный пользователь на эту картинку
+      allOf:
+        - $ref: '#/components/schemas/ThingDto'
+        - type: object
+          properties:
+            alreadyResponded:
+              type: boolean
+              description: Указывает, откликнулся ли этот конкретный пользователь на эту вещь
+          required:
+            - alreadyResponded
 
 
     ThingTypeDto:
