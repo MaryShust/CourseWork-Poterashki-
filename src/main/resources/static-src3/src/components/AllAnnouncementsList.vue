@@ -6,7 +6,7 @@
           <label>Название или описание:</label>
           <input
             type="text"
-            v-model="filters.title"
+            v-model="localFilters.title"
             placeholder="Введите название или ключевое слово..."
             @keyup.enter="applyFilters"
           />
@@ -16,7 +16,7 @@
           <label>Город:</label>
           <input
             type="text"
-            v-model="filters.city"
+            v-model="localFilters.city"
             placeholder="Введите город..."
             @keyup.enter="applyFilters"
           />
@@ -26,7 +26,7 @@
       <div class="filter-row">
         <div class="filter-group">
           <label>Статус:</label>
-          <select v-model="filters.status">
+          <select v-model="localFilters.status">
             <option value="all">Все</option>
             <option value="active">Активные</option>
             <option value="completed">Завершенные</option>
@@ -35,7 +35,7 @@
 
         <div class="filter-group">
           <label>Причина:</label>
-          <select v-model="filters.type">
+          <select v-model="localFilters.type">
             <option value="all">Все</option>
             <option value="lost">Потерял</option>
             <option value="found">Нашел</option>
@@ -47,7 +47,7 @@
           <div class="date-input-wrapper">
             <input
               type="datetime-local"
-              v-model="filters.lostDate"
+              v-model="localFilters.lostDate"
               :max="currentDateTime"
             />
           </div>
@@ -207,13 +207,21 @@ export default {
     showPagination: {
       type: Boolean,
       default: true
+    },
+    initialPage: {
+      type: Number,
+      default: 1
+    },
+    savedFilters: {
+      type: Object,
+      default: () => ({})
     }
   },
   data() {
     return {
-      filters: {
-        title: 'зонт',
-        city: 'Москва',
+      localFilters: {
+        title: '',
+        city: '',
         status: 'all',
         lostDate: ''
       },
@@ -225,31 +233,91 @@ export default {
   computed: {
     currentDateTime() {
       const now = new Date()
-      // Получаем смещение временной зоны в минутах
       const timezoneOffset = now.getTimezoneOffset()
-      // Преобразуем в миллисекунды и корректируем
       const localTime = new Date(now.getTime() - (timezoneOffset * 60000))
       return localTime.toISOString().slice(0, 16)
     },
 
     hasActiveFilters() {
-      return Object.entries(this.filters).some(([key, value]) => {
+      return Object.entries(this.localFilters).some(([key, value]) => {
         if (key === 'status') return value !== 'all'
         return value !== ''
       })
     }
   },
   watch: {
-    // Синхронизация currentPage при изменении извне
+    // Восстанавливаем фильтры из пропса при изменении
+    savedFilters: {
+      immediate: true,
+      handler(newFilters) {
+        if (newFilters && Object.keys(newFilters).length > 0) {
+          // Преобразуем серверные фильтры в локальные
+          this.restoreFiltersFromServer(newFilters)
+        }
+      }
+    },
+
+    // Обновляем текущую страницу при изменении initialPage
+    initialPage: {
+      immediate: true,
+      handler(newPage) {
+        if (newPage && newPage >= 1) {
+          this.currentPage = newPage
+        }
+      }
+    },
+
+    // Синхронизация totalPages
     totalPages(newVal) {
-      if (this.currentPage > newVal && newVal > 0) {
+      if (newVal > 0 && this.currentPage > newVal) {
         this.currentPage = newVal
       }
     }
   },
+  mounted() {
+    // При монтировании также проверяем savedFilters
+    if (this.savedFilters && Object.keys(this.savedFilters).length > 0) {
+      this.restoreFiltersFromServer(this.savedFilters)
+    }
+  },
   methods: {
+    // Преобразуем серверные фильтры в локальные
+    restoreFiltersFromServer(serverFilters) {
+      if (serverFilters.title) {
+        this.localFilters.title = serverFilters.title
+      }
+
+      if (serverFilters.place && serverFilters.place.city) {
+        this.localFilters.city = serverFilters.place.city
+      }
+
+      if (serverFilters.completed === true) {
+        this.localFilters.status = 'completed'
+      } else if (serverFilters.completed === false) {
+        this.localFilters.status = 'active'
+      }
+
+      if (serverFilters.type === 'LOST') {
+        this.localFilters.type = 'lost'
+      } else if (serverFilters.type === 'FOUND') {
+        this.localFilters.type = 'found'
+      }
+
+      if (serverFilters.date) {
+        // Преобразуем ISO дату обратно в формат для datetime-local
+        const date = new Date(serverFilters.date)
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
+
+        this.localFilters.lostDate = `${year}-${month}-${day}T${hours}:${minutes}`
+      }
+    },
+
     validateFilters() {
-      if (!this.filters.title || !this.filters.city) {
+      if (!this.localFilters.title || !this.localFilters.city) {
         this.errorMessage = 'Поля "Название" и "Город" должны быть указаны'
         return false
       }
@@ -266,7 +334,6 @@ export default {
     },
 
     applyFilters() {
-      // Проверяем обязательные поля
       if (!this.validateFilters()) {
         return
       }
@@ -275,33 +342,28 @@ export default {
       const filterData = {}
 
       // Добавляем только заполненные поля
-      if (this.filters.title) filterData.title = this.filters.title
-      if (this.filters.city) {
-        filterData.place = { city: this.filters.city }
+      if (this.localFilters.title) filterData.title = this.localFilters.title
+      if (this.localFilters.city) {
+        filterData.place = { city: this.localFilters.city }
       }
-      if (this.filters.status === 'completed') {
+      if (this.localFilters.status === 'completed') {
         filterData.completed = true
-      } else if (this.filters.status === 'active') {
+      } else if (this.localFilters.status === 'active') {
         filterData.completed = false
       }
 
-      if (this.filters.type === 'lost') {
+      if (this.localFilters.type === 'lost') {
         filterData.type = 'LOST'
-      } else if (this.filters.type === 'found') {
+      } else if (this.localFilters.type === 'found') {
         filterData.type = 'FOUND'
       }
 
-      if (this.filters.lostDate) {
-        // Преобразуем в объект Date, затем в ISO строку
-        const date = new Date(this.filters.lostDate)
-
-        // Добавляем секунды и миллисекунды, если их нет
+      if (this.localFilters.lostDate) {
+        const date = new Date(this.localFilters.lostDate)
         if (!date.getSeconds()) {
           date.setSeconds(0, 0)
         }
-
         filterData.date = date.toISOString()
-
         console.log('Преобразованная дата:', filterData.date)
       }
 
@@ -315,7 +377,7 @@ export default {
     },
 
     clearAllFilters() {
-      this.filters = {
+      this.localFilters = {
         title: '',
         city: '',
         status: 'all',
