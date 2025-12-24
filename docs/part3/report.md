@@ -17,3 +17,66 @@
 * StatisticsService(для изменения статистики пользователей)
 
 
+# Web
+
+## Архитектура
+Тонкий клиент
+Приложение реализовано как SPA (Single Page Application), где:  
+- Весь UI отрисовывается на клиенте  
+- Сервер предоставляет только данные через API  
+- Навигация происходит без перезагрузки страниц  
+- Состояние приложения управляется на клиенте  
+
+## Структура проекта
+
+```
+src/  
+├── main.js                    # Точка входа  
+├── App.vue                   # Корневой компонент  
+├── router/  
+│   └── index.js             # Конфигурация маршрутизации  
+├── views/                    # Страницы приложения  
+│   ├── Home.vue  
+│   ├── Dashboard.vue  
+│   ├── Profile.vue  
+│   ├── AllAnnouncements.vue  
+│   ├── MyAnnouncements.vue  
+│   ├── CreateAnnouncement.vue  
+│   ├── EditAnnouncement.vue  
+│   └── Details.vue  
+└── components/              # Переиспользуемые компоненты  
+    ├── Header.vue  
+    ├── Footer.vue  
+    ├── LoginModal.vue  
+    ├── AnnouncementForm.vue  
+    ├── AllAnnouncementsList.vue  
+    └── MyAnnouncementsList.vue  
+```
+
+## Маршрутизация (Vue Router):
+Иерархия маршрутов  
+/                    → Home  
+/dashboard          → Dashboard (требует авторизации)  
+/profile            → Profile (требует авторизации)  
+/create             → CreateAnnouncement (требует авторизации)  
+/edit/:id          → EditAnnouncement (требует авторизации)  
+/my_announcements  → MyAnnouncements (требует авторизации)  
+/all_announcements → AllAnnouncements (требует авторизации)  
+/details           → Details (требует авторизации)  
+
+Основные компоненты:  
+```
+App (корневой)
+├── Header (шапка)
+├── Main Content (роутер)
+│   ├── Home (главная)
+│   ├── Dashboard (личный кабинет)
+│   ├── AllAnnouncements (все объявления)
+│   ├── MyAnnouncements (мои объявления)
+│   ├── CreateAnnouncement (создание)
+│   ├── EditAnnouncement (редактирование)
+│   ├── Profile (профиль)
+│   └── Details (детали объявления)
+├── Footer (подвал)
+└── LoginModal (модалка авторизации)
+```
