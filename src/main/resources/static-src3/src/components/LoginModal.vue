@@ -129,6 +129,7 @@
 <script>
 export default {
   name: 'LoginModal',
+  inject: ['eventBus'],
   data() {
     return {
       activeTab: 'login', // 'login' или 'register'
@@ -184,6 +185,7 @@ export default {
           localStorage.setItem('userEmail', this.loginData.email)
 
           this.$root.$emit('auth-changed')
+          this.eventBus.$emit('user-login', true)
           this.$emit('login-success', result.username || this.loginData.email.split('@')[0])
         } else {
           throw new Error('Некорректный ответ от сервера')
@@ -262,6 +264,7 @@ export default {
           localStorage.setItem('currentUserId', result.token)
           localStorage.setItem('userEmail', this.registerData.email)
 
+          this.eventBus.$emit('user-login', true)
           this.$root.$emit('auth-changed')
           this.$emit('login-success', this.registerData.name)
         } else {
