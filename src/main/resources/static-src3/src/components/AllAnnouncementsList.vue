@@ -3,11 +3,11 @@
     <div v-if="showFilters" class="filters">
       <div class="filter-row">
         <div class="filter-group">
-          <label>Название:</label>
+          <label>Название или описание:</label>
           <input
             type="text"
             v-model="filters.title"
-            placeholder="Введите название..."
+            placeholder="Введите название или ключевое слово..."
             @keyup.enter="applyFilters"
           />
         </div>
@@ -21,7 +21,9 @@
             @keyup.enter="applyFilters"
           />
         </div>
+      </div>
 
+      <div class="filter-row">
         <div class="filter-group">
           <label>Статус:</label>
           <select v-model="filters.status">
@@ -30,20 +32,31 @@
             <option value="completed">Завершенные</option>
           </select>
         </div>
-      </div>
 
-      <div class="filter-row">
+        <div class="filter-group">
+          <label>Причина:</label>
+          <select v-model="filters.type">
+            <option value="all">Все</option>
+            <option value="lost">Потерял</option>
+            <option value="found">Нашел</option>
+          </select>
+        </div>
+
         <div class="filter-group">
           <label>Дата потери:</label>
           <div class="date-input-wrapper">
             <input
-              type="date"
+              type="datetime-local"
               v-model="filters.lostDate"
-              :max="today"
+              :max="currentDateTime"
             />
-            <span class="calendar-icon">📅</span>
           </div>
         </div>
+      </div>
+
+      <!-- Сообщение об ошибке -->
+      <div v-if="errorMessage" class="error-message">
+        ❌ {{ errorMessage }}
       </div>
 
       <div class="filter-actions">
@@ -140,9 +153,21 @@
 
     <!-- Пагинация -->
     <div v-if="showPagination && announcements.length > 0" class="pagination">
-      <button :disabled="currentPage === 1" @click="prevPage">← Назад</button>
+      <button
+        :disabled="currentPage === 1 || loading"
+        @click="goToPage(currentPage - 1)"
+        :class="{ 'disabled': currentPage === 1 || loading }"
+      >
+        ← Назад
+      </button>
       <span>Страница {{ currentPage }} из {{ totalPages }}</span>
-      <button :disabled="currentPage === totalPages" @click="nextPage">Вперед →</button>
+      <button
+        :disabled="currentPage === totalPages || loading"
+        @click="goToPage(currentPage + 1)"
+        :class="{ 'disabled': currentPage === totalPages || loading }"
+      >
+        Вперед →
+      </button>
     </div>
   </div>
 </template>
@@ -160,8 +185,8 @@ export default {
       default: 0
     },
     totalCount: {
-        type: Number,
-        default: 0
+      type: Number,
+      default: 0
     },
     loading: {
       type: Boolean,
@@ -182,10 +207,6 @@ export default {
     showPagination: {
       type: Boolean,
       default: true
-    },
-    itemsPerPage: {
-      type: Number,
-      default: 10
     }
   },
   data() {
@@ -197,12 +218,18 @@ export default {
         lostDate: ''
       },
       currentPage: 1,
+      errorMessage: '',
       currentUserId: localStorage.getItem('currentUserId')
     }
   },
   computed: {
-    today() {
-      return new Date().toISOString().split('T')[0]
+    currentDateTime() {
+      const now = new Date()
+      // Получаем смещение временной зоны в минутах
+      const timezoneOffset = now.getTimezoneOffset()
+      // Преобразуем в миллисекунды и корректируем
+      const localTime = new Date(now.getTime() - (timezoneOffset * 60000))
+      return localTime.toISOString().slice(0, 16)
     },
 
     hasActiveFilters() {
@@ -210,15 +237,27 @@ export default {
         if (key === 'status') return value !== 'all'
         return value !== ''
       })
-    },
-
-    paginatedAnnouncements() {
-      const start = (this.currentPage - 1) * this.itemsPerPage
-      const end = start + this.itemsPerPage
-      return this.announcements.slice(start, end)
+    }
+  },
+  watch: {
+    // Синхронизация currentPage при изменении извне
+    totalPages(newVal) {
+      if (this.currentPage > newVal && newVal > 0) {
+        this.currentPage = newVal
+      }
     }
   },
   methods: {
+    validateFilters() {
+      if (!this.filters.title || !this.filters.city) {
+        this.errorMessage = 'Поля "Название" и "Город" должны быть указаны'
+        return false
+      }
+
+      this.errorMessage = ''
+      return true
+    },
+
     getStatusText(announcement) {
       if (announcement.completedAt) {
         return '✅ Завершено'
@@ -227,6 +266,11 @@ export default {
     },
 
     applyFilters() {
+      // Проверяем обязательные поля
+      if (!this.validateFilters()) {
+        return
+      }
+
       // Формируем объект фильтров для отправки на сервер
       const filterData = {}
 
@@ -241,11 +285,32 @@ export default {
         filterData.completed = false
       }
 
+      if (this.filters.type === 'lost') {
+        filterData.type = 'LOST'
+      } else if (this.filters.type === 'found') {
+        filterData.type = 'FOUND'
+      }
+
       if (this.filters.lostDate) {
-        filterData.date = this.filters.lostDate
+        // Преобразуем в объект Date, затем в ISO строку
+        const date = new Date(this.filters.lostDate)
+
+        // Добавляем секунды и миллисекунды, если их нет
+        if (!date.getSeconds()) {
+          date.setSeconds(0, 0)
+        }
+
+        filterData.date = date.toISOString()
+
+        console.log('Преобразованная дата:', filterData.date)
       }
 
       console.log('Фильтры для сервера:', filterData)
+
+      // Сбрасываем текущую страницу на первую при применении фильтров
+      this.currentPage = 1
+
+      // Отправляем событие родителю
       this.$emit('apply-filters', filterData)
     },
 
@@ -257,19 +322,28 @@ export default {
         lostDate: ''
       }
       this.currentPage = 1
+      this.errorMessage = ''
       this.$emit('clear-filters')
     },
 
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--
+    goToPage(page) {
+      if (page < 1 || page > this.totalPages || this.loading) {
+        return
       }
+
+      this.currentPage = page
+      console.log(`Переход на страницу ${page}`)
+
+      // Отправляем событие родителю с новой страницей
+      this.$emit('page-changed', page)
+    },
+
+    prevPage() {
+      this.goToPage(this.currentPage - 1)
     },
 
     nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++
-      }
+      this.goToPage(this.currentPage + 1)
     },
 
     viewDetails(id) {
@@ -409,15 +483,16 @@ export default {
   color: #666;
 }
 
-/* Скрыть иконку календаря в Safari */
-.date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
-  opacity: 0;
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
+/* Сообщение об ошибке */
+.error-message {
+  background-color: #fee;
+  color: #c33;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #fcc;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .filter-actions {
@@ -440,9 +515,14 @@ export default {
   transition: all 0.3s;
 }
 
-.btn-clear:hover {
+.btn-clear:hover:not(:disabled) {
   background: #ff3742;
   transform: translateY(-1px);
+}
+
+.btn-clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-apply {
@@ -457,9 +537,14 @@ export default {
   transition: all 0.3s;
 }
 
-.btn-apply:hover {
+.btn-apply:hover:not(:disabled) {
   background: #7c3aed;
   transform: translateY(-1px);
+}
+
+.btn-apply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .list-stats {
@@ -678,27 +763,15 @@ export default {
   cursor: default;
 }
 
-.btn-edit, .btn-view {
+.btn-view {
   padding: 0.5rem 0.75rem;
+  background: #6c757d;
+  color: white;
   border: none;
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.3s;
-}
-
-.btn-edit {
-  background: #8B5CF6;
-  color: white;
-}
-
-.btn-edit:hover {
-  background: #7c3aed;
-}
-
-.btn-view {
-  background: #6c757d;
-  color: white;
 }
 
 .btn-view:hover {
@@ -724,16 +797,18 @@ export default {
   border: 1px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 0.9rem;
   transition: all 0.3s;
 }
 
-.pagination button:hover:not(:disabled) {
+.pagination button:hover:not(:disabled):not(.disabled) {
   background: #8B5CF6;
   color: white;
   border-color: #8B5CF6;
 }
 
-.pagination button:disabled {
+.pagination button:disabled,
+.pagination button.disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

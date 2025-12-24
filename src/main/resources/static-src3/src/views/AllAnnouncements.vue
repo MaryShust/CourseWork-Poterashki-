@@ -18,6 +18,7 @@
         :show-pagination="true"
         @apply-filters="handleApplyFilters"
         @clear-filters="handleClearFilters"
+        @page-changed="handlePageChange"
       />
     </div>
   </div>
@@ -39,21 +40,23 @@ export default {
       totalCount: 0,
       filters: {},
       currentPage: 0,
-      pageSize: 10
+      pageSize: 9
     }
   },
   mounted() {
-    const filters = {
-        title: 'зонт',
-        place: {
-            city: 'Москва'
-        }
+    this.filters = {
+      title: 'зонт',
+      place: {
+        city: 'Москва'
+      }
     }
-    this.loadAllAnnouncements(this.currentPage, filters)
+    this.loadAllAnnouncements(this.currentPage, this.filters)
   },
   methods: {
     async loadAllAnnouncements(currentPage, filters = {}) {
       this.loading = true
+      this.currentPage = currentPage
+
       try {
         // Базовый requestBody
         const requestBody = {}
@@ -72,6 +75,10 @@ export default {
 
         if (filters.completed !== undefined) {
           requestBody.completed = filters.completed
+        }
+
+        if (filters.type !== undefined) {
+          requestBody.type = filters.type
         }
 
         if (filters.date) {
@@ -107,9 +114,11 @@ export default {
         })
 
         if (response.ok) {
-          this.allAnnouncements = await response.json()
-          this.totalCount = 17
+          const data = await response.json()
+          this.allAnnouncements = data.items
+          this.totalCount = data.total
           this.totalPages = Math.ceil(this.totalCount / this.pageSize)
+          console.log(`Загружена страница ${currentPage + 1}, объявлений: ${this.allAnnouncements.length}`)
         } else {
           console.error('Ошибка загрузки:', response.status)
         }
@@ -131,6 +140,13 @@ export default {
       this.filters = {}
       this.currentPage = 0
       console.log('Сбрасываем фильтры')
+    },
+
+    handlePageChange(page) {
+      console.log('Изменение страницы на:', page)
+      // Преобразуем номер страницы для API (в API страницы обычно начинаются с 0)
+      const apiPage = page - 1
+      this.loadAllAnnouncements(apiPage, this.filters)
     }
   }
 }
