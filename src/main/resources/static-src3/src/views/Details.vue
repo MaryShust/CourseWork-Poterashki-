@@ -157,7 +157,7 @@
               </div>
               <div class="responder-info">
                 <div class="responder-name">
-                  {{ response.userName || 'Пользователь' }}
+                  {{ response.username || 'Пользователь' }}
                   <span v-if="response.userCity" class="responder-city">📍 {{ response.userCity }}</span>
                 </div>
 
@@ -225,7 +225,8 @@ export default {
       error: '',
       showPhotoModal: false,
       currentUserId: localStorage.getItem('currentUserId') || null,
-      isResponding: false
+      isResponding: false,
+      respondedInCurrentSession: false
     }
   },
   computed: {
@@ -244,7 +245,7 @@ export default {
         return false
       }
       // Предполагаем, что responses содержат ID пользователей
-      return this.announcement.responses.includes(this.currentUserId)
+      return this.announcement.alreadyResponded || this.respondedInCurrentSession
     },
 
     hasPhotos() {
@@ -444,8 +445,10 @@ export default {
 
         if (response.ok) {
           alert('Вы успешно откликнулись на объявление!')
+          this.respondedInCurrentSession = true
         } else {
           throw new Error('Не удалось отправить отклик')
+          this.respondedInCurrentSession = false
         }
       } catch (error) {
         console.error('Ошибка при отклике:', error)
@@ -524,21 +527,6 @@ export default {
 </script>
 
 <style scoped>
-.status-badge.lost {
-  background: #d4edda;
-  color: #155724;
-}
-
-.status-badge.found {
-  background: #cce5ff;
-  color: #004085;
-}
-
-.status-badge.completed {
-  background: #fff3cd;
-  color: #856404;
-}
-
 .details-page {
   min-height: 100vh;
   background: #f8f9fa;
@@ -652,7 +640,7 @@ export default {
   font-weight: 600;
 }
 
-.status-badge.active {
+.status-badge.lost {
   background: #d4edda;
   color: #155724;
 }
@@ -662,7 +650,7 @@ export default {
   color: #004085;
 }
 
-.status-badge.inactive {
+.status-badge.completed {
   background: #fff3cd;
   color: #856404;
 }
@@ -922,26 +910,37 @@ export default {
   opacity: 0.9;
 }
 
-.author-responses {
+.responses-section {
+  margin-top: 2rem;
   padding: 1.5rem 2rem;
   border-top: 1px solid #e9ecef;
   background: #f8f9fa;
+  border-radius: 10px;
 }
 
 .responses-header {
   margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.author-responses h3 {
+.responses-header h3 {
   color: #8B5CF6;
-  margin-bottom: 0.5rem;
+  margin: 0;
   font-size: 1.3rem;
 }
 
 .responses-count {
   color: #666;
   font-size: 0.95rem;
-  margin-bottom: 1rem;
+  font-weight: 600;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #e9ecef;
 }
 
 .responders-list {
@@ -959,6 +958,7 @@ export default {
   border-radius: 10px;
   border: 1px solid #e9ecef;
   transition: transform 0.2s;
+  margin: 0 0.5rem;
 }
 
 .responder-card:hover {
@@ -982,6 +982,7 @@ export default {
 
 .responder-info {
   flex: 1;
+  min-width: 0;
 }
 
 .responder-name {
@@ -1020,12 +1021,14 @@ export default {
 .contact-icon {
   color: #666;
   width: 20px;
+  flex-shrink: 0;
 }
 
 .contact-link {
   color: #8B5CF6;
   text-decoration: none;
   font-size: 0.95rem;
+  word-break: break-all;
 }
 
 .contact-link:hover {
@@ -1074,23 +1077,16 @@ export default {
   background: #5a6268;
 }
 
-.public-responses {
-  padding: 1.5rem 2rem;
-  border-top: 1px solid #e9ecef;
-  background: #f8f9fa;
-}
-
-.public-responses h3 {
-  color: #333;
-  margin-bottom: 0.5rem;
-  font-size: 1.2rem;
-}
-
 .responses-note {
   color: #666;
   font-size: 0.9rem;
   font-style: italic;
   margin-top: 0.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  line-height: 1.6;
 }
 
 .closure-notice {
@@ -1199,9 +1195,22 @@ export default {
     font-size: 0.9rem;
   }
 
+  .responses-section {
+    padding: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .responses-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
   .responder-card {
     flex-direction: column;
     gap: 1rem;
+    padding: 1rem;
+    margin: 0;
   }
 
   .responder-avatar {
@@ -1216,6 +1225,12 @@ export default {
 
   .btn-call, .btn-email {
     flex: 1;
+  }
+
+  .responder-name {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
   }
 
   .already-responded {
