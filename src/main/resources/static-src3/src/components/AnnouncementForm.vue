@@ -161,7 +161,7 @@
           <input
             type="number"
             id="reward"
-            v-model.number="formData.reward"
+            v-model.number="formData.fee"
             placeholder="0"
             min="0"
             step="100"
@@ -291,8 +291,9 @@ export default {
           placeName: '',
           extraDescription: ''
         },
-        reward: 0
-      }
+        fee: 0
+      },
+      version: 0
     }
   },
   computed: {
@@ -332,8 +333,7 @@ export default {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': userId,
-                'id': this.announcementId
+                'Authorization': userId
             }
         })
 
@@ -348,7 +348,7 @@ export default {
         // Преобразуем данные для формы
         this.formData = {
           type: data.type || 'LOST',
-          title: this.extractTitleFromDescription(data.description) || '',
+          title: data.title,
           description: data.description || '',
           date: data.date ? new Date(data.date).toISOString().slice(0, 16) : this.formData.date,
           place: {
@@ -358,8 +358,9 @@ export default {
             placeName: data.place?.placeName || '',
             extraDescription: data.place?.extraDescription || ''
           },
-          reward: this.extractRewardFromDescription(data.description) || 0
+          fee: data.fee || 0
         }
+        this.version = data.version
 
       } catch (error) {
         console.error('Ошибка загрузки объявления:', error)
@@ -367,19 +368,6 @@ export default {
       } finally {
         this.loading = false
       }
-    },
-
-    extractTitleFromDescription(description) {
-      // Простая логика извлечения заголовка из описания
-      if (!description) return ''
-      const firstSentence = description.split('.')[0]
-      return firstSentence.length > 100 ? firstSentence.substring(0, 100) : firstSentence
-    },
-
-    extractRewardFromDescription(description) {
-      if (!description) return 0
-      const rewardMatch = description.match(/(\d+)[\s]*руб/)
-      return rewardMatch ? parseInt(rewardMatch[1]) : 0
     },
 
     getPhotoUrl(photo) {
@@ -485,8 +473,8 @@ export default {
         const thingPayload = this.buildThingPayload()
 
         if (this.isEditMode) {
-          const result = await this.updateThing(userId, thingId, thingPayload)
-          version = result.version
+          await this.updateThing(userId, thingId, thingPayload)
+          version = this.version + 1
         } else {
           const result = await this.createThing(userId, thingPayload)
           thingId = result.id
@@ -524,7 +512,7 @@ export default {
         // Режим редактирования
         return {
           title: this.formData.title,
-          fee: this.formData.reward,
+          fee: this.formData.fee,
           owner: this.editingData.owner,
           type: this.formData.type,
           date: new Date(this.formData.date).toISOString(),
@@ -546,7 +534,7 @@ export default {
         // Режим создания
         return {
           title: this.formData.title,
-          fee: this.formData.reward,
+          fee: this.formData.fee,
           type: this.formData.type,
           date: new Date(this.formData.date).toISOString(),
           place: {
@@ -593,8 +581,6 @@ export default {
         const errorText = await response.text()
         throw new Error(errorText || 'Ошибка обновления объявления')
       }
-
-      return await response.json()
     },
 
     async uploadPhoto(userId, thingId, file, version) {
@@ -629,7 +615,7 @@ export default {
           placeName: '',
           extraDescription: ''
         },
-        reward: 0
+        fee: 0
       }
       this.selectedFile = null
       this.photoPreview = null
