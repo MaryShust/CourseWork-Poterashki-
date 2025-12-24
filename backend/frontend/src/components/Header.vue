@@ -35,12 +35,14 @@ export default {
     window.addEventListener('storage', this.checkAuth)
     this.$root.$on('auth-changed', this.checkAuth)
     this.eventBus.$on('user-name-changed', this.checkAuth)
+    this.eventBus.$on('user-login', this.checkAuth)
   },
   beforeDestroy() {
     console.log('HEADER DESTROY')
     window.removeEventListener('storage', this.checkAuth)
     this.$root.$off('auth-changed', this.checkAuth)
     this.eventBus.$off('user-name-changed', this.checkAuth)
+    this.eventBus.$off('user-login', this.checkAuth)
   },
   methods: {
     checkAuth() {

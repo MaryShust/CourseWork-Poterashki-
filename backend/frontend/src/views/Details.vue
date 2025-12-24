@@ -25,8 +25,8 @@
         <div class="details-header-info">
           <div class="title-section">
             <h1 class="announcement-title">{{ announcement.title }}</h1>
-            <div class="status-badge" :class="announcement.isActive ? (announcement.isFound ? 'found' : 'active') : 'inactive'">
-              {{ announcement.isActive ? (announcement.isFound ? '🔍 Нашли' : '🔍 Ищут') : '✅ Найдено' }}
+            <div class="status-badge" :class="getStatusClass()">
+              {{ getStatusText() }}
             </div>
           </div>
 
@@ -34,8 +34,8 @@
             <span class="created-date">
               Создано: {{ formatDateTime(announcement.createdAt) }}
             </span>
-            <span v-if="announcement.updatedAt !== announcement.createdAt" class="updated-date">
-              Обновлено: {{ formatDateTime(announcement.updatedAt) }}
+            <span v-if="announcement.completedAt" class="updated-date">
+              Завершено: {{ formatDateTime(announcement.completedAt) }}
             </span>
           </div>
         </div>
@@ -43,9 +43,9 @@
         <div class="details-grid">
           <div class="left-column">
             <div class="photo-section">
-              <div v-if="announcement.photoUrl" class="photo-container">
+              <div v-if="hasPhotos" class="photo-container">
                 <img
-                  :src="announcement.photoUrl"
+                  :src="announcement.photos[0]"
                   :alt="announcement.title"
                   class="main-photo"
                   @click="openPhotoModal"
@@ -53,7 +53,7 @@
               </div>
               <div v-else class="no-photo">
                 <div class="no-photo-icon">📷</div>
-                <p>Фотография отсутствует</p>
+                <p>Фотографии отсутствуют</p>
               </div>
             </div>
 
@@ -68,43 +68,39 @@
 
           <div class="right-column">
             <div class="details-section">
-              <h3>Детали потери</h3>
+              <h3>Детали {{ announcement.type === 'LOST' ? 'потери' : 'находки' }}</h3>
               <div class="details-list">
-                <div class="detail-item">
+                <div v-if="announcement.place" class="detail-item">
                   <span class="detail-label">🗺️ Город:</span>
-                  <span class="detail-value">{{ announcement.city }}</span>
+                  <span class="detail-value">{{ announcement.place.city || 'Не указан' }}</span>
                 </div>
-                <div v-if="announcement.address" class="detail-item">
+                <div v-if="getFullAddress()" class="detail-item">
                   <span class="detail-label">📍 Адрес:</span>
-                  <span class="detail-value">{{ announcement.address }}</span>
+                  <span class="detail-value">{{ getFullAddress() }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="detail-label">📅 Дата потери:</span>
-                  <span class="detail-value">{{ formatDate(announcement.lostDate) }}</span>
+                  <span class="detail-label">📅 Дата:</span>
+                  <span class="detail-value">{{ formatDate(announcement.date) }}</span>
                 </div>
-                <div v-if="announcement.color" class="detail-item">
-                  <span class="detail-label">🎨 Цвет:</span>
-                  <span class="detail-value">{{ announcement.color }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">📋 Категория:</span>
-                  <span class="detail-value">{{ getCategoryName(announcement.category) }}</span>
+                <div v-if="announcement.type" class="detail-item">
+                  <span class="detail-label">📋 Тип:</span>
+                  <span class="detail-value">{{ getTypeText(announcement.type) }}</span>
                 </div>
               </div>
             </div>
 
-            <div v-if="announcement.reward > 0" class="reward-section">
+            <div v-if="announcement.fee > 0" class="reward-section">
               <h3>Вознаграждение</h3>
               <div class="reward-amount">
                 <span class="reward-icon">💰</span>
-                <span class="reward-value">{{ formatCurrency(announcement.reward) }}</span>
+                <span class="reward-value">{{ formatCurrency(announcement.fee) }}</span>
               </div>
             </div>
 
             <div class="author-section">
               <h3>Автор объявления</h3>
               <div class="author-info">
-                <div class="author-name">👤 {{ announcement.userName }}</div>
+                <div class="author-name">👤 {{ this.ownerName || 'Аноним' }}</div>
                 <div v-if="isCurrentUserAuthor" class="author-note">
                   <span class="your-announcement">(Это ваше объявление)</span>
                 </div>
@@ -116,17 +112,7 @@
                 ✏️ Редактировать объявление
               </button>
 
-              <div v-if="!isCurrentUserAuthor && hasCurrentUserResponded && announcement.isActive && announcement.isFound" class="already-responded">
-                <div class="response-status">
-                  <span class="response-icon">✅</span>
-                  <span class="response-text">Вы уже откликнулись на это объявление</span>
-                </div>
-                <div class="response-info">
-                  <p>Автор свяжется с вами, если захочет вернуть вещь именно вам</p>
-                </div>
-              </div>
-
-              <div v-if="!isCurrentUserAuthor && hasCurrentUserResponded && announcement.isActive && !announcement.isFound" class="already-responded">
+              <div v-if="!isCurrentUserAuthor && hasCurrentUserResponded && !isCompleted" class="already-responded">
                 <div class="response-status">
                   <span class="response-icon">✅</span>
                   <span class="response-text">Вы уже откликнулись на это объявление</span>
@@ -136,97 +122,93 @@
                 </div>
               </div>
 
-              <button v-if="!isCurrentUserAuthor && announcement.isActive && !hasCurrentUserResponded" class="btn-contact" @click="contactAuthor" :disabled="isResponding">
+              <button v-if="!isCurrentUserAuthor && !isCompleted && !hasCurrentUserResponded"
+                      class="btn-contact"
+                      @click="respondToAnnouncement"
+                      :disabled="isResponding">
                 📞 Откликнуться
+              </button>
+
+              <button v-if="isCurrentUserAuthor && !isCompleted" class="btn-close" @click="completeAnnouncement">
+                ✅ Завершить объявление
               </button>
 
               <button class="btn-share" @click="shareAnnouncement">
                 🔗 Поделиться
               </button>
-
-              <button v-if="isCurrentUserAuthor && announcement.isActive" class="btn-close" @click="close" :disabled="announcement.isActive">
-                Закрыть
-              </button>
-
             </div>
           </div>
         </div>
 
-        <div v-if="isCurrentUserAuthor && announcement.respondedUsers && announcement.respondedUsers.length > 0"
-             class="responses-section author-responses">
+        <div v-if="announcement.responses && announcement.responses.length > 0"
+             class="responses-section">
           <div class="responses-header">
-            <h3>Люди, откликнувшиеся на ваше объявление</h3>
+            <h3>{{ isCurrentUserAuthor ? 'Отклики на объявление' : 'Информация об откликах' }}</h3>
             <div class="responses-count">
-              💬 {{ announcement.respondedUsers.length }}
-              {{ getResponsesText(announcement.respondedUsers.length) }} откликнулось
+              💬 {{ announcement.responses.length }}
+              {{ getResponsesText(announcement.responses.length) }}
             </div>
           </div>
 
-          <div class="responders-list">
-            <div v-for="user in announcement.respondedUsers" :key="user.id" class="responder-card">
+          <div v-if="isCurrentUserAuthor" class="responders-list">
+            <div v-for="response in announcement.responses" :key="response.id" class="responder-card">
               <div class="responder-avatar">
-                {{ getUserInitials(user.name) }}
+                {{ getUserInitials(response.username) }}
               </div>
               <div class="responder-info">
                 <div class="responder-name">
-                  {{ user.name }}
-                  <span v-if="user.city" class="responder-city">📍 {{ user.city }}</span>
+                  {{ response.username || 'Пользователь' }}
+                  <span v-if="response.userCity" class="responder-city">📍 {{ response.userCity }}</span>
                 </div>
 
                 <div class="responder-contacts">
-                  <div v-if="user.phone" class="contact-item">
+                  <div v-if="response.phone" class="contact-item">
                     <span class="contact-icon">📱</span>
-                    <a :href="'tel:' + user.phone" class="contact-link">{{ user.phone }}</a>
+                    <a :href="'tel:' + response.phone" class="contact-link">{{ response.phone }}</a>
                   </div>
-                  <div v-if="user.email" class="contact-item">
+                  <div v-if="response.email" class="contact-item">
                     <span class="contact-icon">📧</span>
-                    <a :href="'mailto:' + user.email" class="contact-link">{{ user.email }}</a>
+                    <a :href="'mailto:' + response.email" class="contact-link">{{ response.email }}</a>
                   </div>
                 </div>
 
-                <div v-if="user.dateCreating" class="responder-date">
-                  Откликнулся: {{ formatDateTime(user.dateCreating) }}
+                <div v-if="response.respondedAt" class="responder-date">
+                  Откликнулся: {{ formatDateTime(response.respondedAt) }}
                 </div>
               </div>
 
               <div class="responder-actions">
-                <button class="btn-call" @click="callUser(user.phone)" v-if="user.phone">
+                <button class="btn-call" @click="callUser(response.phone)" v-if="response.phone">
                   Позвонить
                 </button>
-                <button class="btn-email" @click="emailUser(user.email)" v-if="user.email">
+                <button class="btn-email" @click="emailUser(response.email)" v-if="response.email">
                   Написать
                 </button>
               </div>
             </div>
           </div>
-        </div>
 
-        <div v-if="!isCurrentUserAuthor && announcement.respondedUsers && announcement.respondedUsers.length > 0"
-             class="responses-section public-responses">
-          <h3>Отклики на объявление</h3>
-          <div class="responses-count">
-            💬 На это объявление уже откликнулось {{ announcement.respondedUsers.length }}
-            {{ getResponsesText(announcement.respondedUsers.length) }}
+          <div v-else class="responses-note">
+            <p>На это объявление уже откликнулось {{ announcement.responses.length }} {{ getResponsesText(announcement.responses.length) }}</p>
+            <p v-if="announcement.type === 'LOST'">Если вы нашли эту вещь, нажмите "Откликнуться" чтобы связаться с автором</p>
+            <p v-else>Если вы потеряли эту вещь, нажмите "Откликнуться" чтобы связаться с автором</p>
           </div>
-          <p class="responses-note">
-            Контактная информация откликнувшихся видна только автору объявления
-          </p>
         </div>
 
-        <div v-if="!announcement.isActive" class="closure-notice">
+        <div v-if="isCompleted" class="closure-notice">
           <div class="notice-icon">ℹ️</div>
           <div class="notice-content">
-            <h4>Объявление закрыто</h4>
-            <p>Это объявление больше не актуально. Вещь найдена или объявление удалено автором.</p>
+            <h4>Объявление завершено</h4>
+            <p>Это объявление больше не актуально. Вещь {{ announcement.type === 'LOST' ? 'найдена' : 'возвращена владельцу' }}.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="showPhotoModal && announcement.photoUrl" class="photo-modal" @click="closePhotoModal">
+    <div v-if="showPhotoModal && hasPhotos" class="photo-modal" @click="closePhotoModal">
       <div class="modal-content" @click.stop>
         <button class="modal-close" @click="closePhotoModal">×</button>
-        <img :src="announcement.photoUrl" :alt="announcement.title" class="modal-photo">
+        <img :src="announcement.photos[0]" :alt="announcement.title" class="modal-photo">
       </div>
     </div>
   </div>
@@ -237,24 +219,40 @@ export default {
   name: 'Details',
   data() {
     return {
+      ownerName: null,
       announcement: null,
       loading: false,
       error: '',
       showPhotoModal: false,
       currentUserId: localStorage.getItem('currentUserId') || null,
-      isResponding: false
+      isResponding: false,
+      respondedInCurrentSession: false
     }
   },
   computed: {
     isCurrentUserAuthor() {
-      return this.currentUserId && this.announcement && this.announcement.userId === this.currentUserId
+      console.log("isCurrentUserAuthor")
+      console.log(localStorage.getItem('isMyDetails'))
+      return localStorage.getItem('isMyDetails') === 'true'
+    },
+
+    isCompleted() {
+      return this.announcement && this.announcement.completedAt !== null
     },
 
     hasCurrentUserResponded() {
-      if (!this.currentUserId || !this.announcement || !this.announcement.respondedUsers) {
+      if (!this.currentUserId || !this.announcement || !this.announcement.responses) {
         return false
       }
-      return this.announcement.respondedUsers.some(user => user.id === this.currentUserId)
+      // Предполагаем, что responses содержат ID пользователей
+      return this.announcement.alreadyResponded || this.respondedInCurrentSession
+    },
+
+    hasPhotos() {
+      return this.announcement &&
+             this.announcement.photos &&
+             this.announcement.photos.length > 0 &&
+             this.announcement.photos[0]
     }
   },
   created() {
@@ -273,7 +271,13 @@ export default {
           throw new Error('ID объявления не указан')
         }
 
-        const response = await fetch(`/announcements/${announcementId}`)
+        const response = await fetch(`/api/thing/${announcementId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': this.currentUserId
+          }
+        })
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -285,9 +289,37 @@ export default {
         this.announcement = await response.json()
         console.log('Загружено объявление:', this.announcement)
 
+        await this.loadOwner()
       } catch (err) {
         console.error('Ошибка загрузки объявления:', err)
         this.error = err.message || 'Не удалось загрузить информацию об объявлении'
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async loadOwner() {
+      this.loading = true
+      this.error = ''
+
+      try {
+        if (!this.announcement.owner) {
+          throw new Error('ID пользователя не указан')
+        }
+
+        const response = await fetch(`/api/public/user/${this.announcement.owner}/profile`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': this.currentUserId
+          }
+        })
+
+        if (response.ok) {
+          this.ownerName = (await response.json()).name
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки объявления:', err)
       } finally {
         this.loading = false
       }
@@ -332,19 +364,38 @@ export default {
       }).format(amount)
     },
 
-    getCategoryName(category) {
-      const categories = {
-        'ELECTRONICS': 'Электроника',
-        'DOCUMENTS': 'Документы',
-        'KEYS': 'Ключи',
-        'WALLET': 'Кошелек/Деньги',
-        'JEWELRY': 'Украшения',
-        'CLOTHES': 'Одежда',
-        'ANIMALS': 'Животные',
-        'BAGS': 'Сумки/Рюкзаки',
-        'OTHER': 'Другое'
+    getFullAddress() {
+      if (!this.announcement.place) return ''
+
+      const place = this.announcement.place
+      const parts = []
+
+      if (place.street) parts.push(`ул. ${place.street}`)
+      if (place.house) parts.push(`д. ${place.house}`)
+      if (place.placeName) parts.push(place.placeName)
+      if (place.extraDescription) parts.push(place.extraDescription)
+
+      return parts.join(', ')
+    },
+
+    getTypeText(type) {
+      const types = {
+        'LOST': 'Потерял',
+        'FOUND': 'Нашел'
       }
-      return categories[category] || category || 'Не указана'
+      return types[type] || type
+    },
+
+    getStatusClass() {
+      if (this.isCompleted) return 'completed'
+      return this.announcement.type === 'LOST' ? 'lost' : 'found'
+    },
+
+    getStatusText() {
+      if (this.isCompleted) {
+        return this.announcement.type === 'LOST' ? '✅ Найдено' : '✅ Возвращено'
+      }
+      return this.announcement.type === 'LOST' ? '🔍 Ищут' : '🔍 Нашёл'
     },
 
     getResponsesText(count) {
@@ -376,51 +427,72 @@ export default {
       }
     },
 
-    async contactAuthor() {
-      if (this.announcement && this.announcement.userId) {
-        try {
-          const response = await fetch(`/announcements/close?id=${this.currentUserId}`, {
-            method: 'POST'
-          })
+    async respondToAnnouncement() {
+      if (!this.announcement || !this.announcement.id || this.isCompleted) {
+        return
+      }
 
-          if (response.ok && (await response.json()) === true) {
-            await this.loadAnnouncement()
-          } else {
-            throw new Error('Ошибка сервера')
+      this.isResponding = true
+
+      try {
+        const response = await fetch(`/api/thing/${this.announcement.id}/reponse`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': this.currentUserId
           }
-        } catch (error) {
-          alert('Не удалось отправить отклик')
+        })
+
+        if (response.ok) {
+          alert('Вы успешно откликнулись на объявление!')
+          this.respondedInCurrentSession = true
+        } else {
+          throw new Error('Не удалось отправить отклик')
+          this.respondedInCurrentSession = false
         }
+      } catch (error) {
+        console.error('Ошибка при отклике:', error)
+        alert('Не удалось отправить отклик. Попробуйте позже.')
+      } finally {
+        this.isResponding = false
       }
     },
 
-    async close() {
-      if (this.announcement && this.announcement.userId) {
-        this.isResponding = true
+    async completeAnnouncement() {
+      if (!this.announcement || !this.announcement.id || this.isCompleted) {
+        return
+      }
 
-        try {
-          const response = await fetch(`/announcements/respond?id=${this.currentUserId}`, {
-            method: 'POST'
-          })
+      if (!confirm('Вы уверены, что хотите завершить это объявление?')) {
+        return
+      }
 
-          if (response.ok && (await response.json()) === true) {
-            await this.loadAnnouncement()
-          } else {
-            throw new Error('Ошибка сервера')
+      try {
+        const response = await fetch(`/api/thing/${this.announcement.id}/complete`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': this.currentUserId
           }
-        } catch (error) {
-          alert('Не удалось отправить отклик')
-        } finally {
-          this.isResponding = false
+        })
+
+        if (response.ok) {
+          this.announcement.completedAt = new Date().toISOString()
+          alert('Объявление успешно завершено!')
+        } else {
+          throw new Error('Не удалось завершить объявление')
         }
+      } catch (error) {
+        console.error('Ошибка при завершении объявления:', error)
+        alert('Не удалось завершить объявление. Попробуйте позже.')
       }
     },
 
     shareAnnouncement() {
       if (navigator.share) {
         navigator.share({
-          title: `Найдено: ${this.announcement.title}`,
-          text: `Помогите найти: ${this.announcement.title}. Город: ${this.announcement.city}`,
+          title: `${this.announcement.type === 'LOST' ? 'Потеряно' : 'Найдено'}: ${this.announcement.title}`,
+          text: `Помогите ${this.announcement.type === 'LOST' ? 'найти' : 'вернуть'} ${this.announcement.description?.substring(0, 100)}...`,
           url: window.location.href
         })
       } else {
@@ -430,7 +502,7 @@ export default {
     },
 
     openPhotoModal() {
-      if (this.announcement.photoUrl) {
+      if (this.hasPhotos) {
         this.showPhotoModal = true
       }
     },
@@ -568,7 +640,7 @@ export default {
   font-weight: 600;
 }
 
-.status-badge.active {
+.status-badge.lost {
   background: #d4edda;
   color: #155724;
 }
@@ -578,7 +650,7 @@ export default {
   color: #004085;
 }
 
-.status-badge.inactive {
+.status-badge.completed {
   background: #fff3cd;
   color: #856404;
 }
@@ -838,26 +910,37 @@ export default {
   opacity: 0.9;
 }
 
-.author-responses {
+.responses-section {
+  margin-top: 2rem;
   padding: 1.5rem 2rem;
   border-top: 1px solid #e9ecef;
   background: #f8f9fa;
+  border-radius: 10px;
 }
 
 .responses-header {
   margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.author-responses h3 {
+.responses-header h3 {
   color: #8B5CF6;
-  margin-bottom: 0.5rem;
+  margin: 0;
   font-size: 1.3rem;
 }
 
 .responses-count {
   color: #666;
   font-size: 0.95rem;
-  margin-bottom: 1rem;
+  font-weight: 600;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid #e9ecef;
 }
 
 .responders-list {
@@ -875,6 +958,7 @@ export default {
   border-radius: 10px;
   border: 1px solid #e9ecef;
   transition: transform 0.2s;
+  margin: 0 0.5rem;
 }
 
 .responder-card:hover {
@@ -898,6 +982,7 @@ export default {
 
 .responder-info {
   flex: 1;
+  min-width: 0;
 }
 
 .responder-name {
@@ -936,12 +1021,14 @@ export default {
 .contact-icon {
   color: #666;
   width: 20px;
+  flex-shrink: 0;
 }
 
 .contact-link {
   color: #8B5CF6;
   text-decoration: none;
   font-size: 0.95rem;
+  word-break: break-all;
 }
 
 .contact-link:hover {
@@ -990,23 +1077,16 @@ export default {
   background: #5a6268;
 }
 
-.public-responses {
-  padding: 1.5rem 2rem;
-  border-top: 1px solid #e9ecef;
-  background: #f8f9fa;
-}
-
-.public-responses h3 {
-  color: #333;
-  margin-bottom: 0.5rem;
-  font-size: 1.2rem;
-}
-
 .responses-note {
   color: #666;
   font-size: 0.9rem;
   font-style: italic;
   margin-top: 0.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  line-height: 1.6;
 }
 
 .closure-notice {
@@ -1115,9 +1195,22 @@ export default {
     font-size: 0.9rem;
   }
 
+  .responses-section {
+    padding: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .responses-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
   .responder-card {
     flex-direction: column;
     gap: 1rem;
+    padding: 1rem;
+    margin: 0;
   }
 
   .responder-avatar {
@@ -1132,6 +1225,12 @@ export default {
 
   .btn-call, .btn-email {
     flex: 1;
+  }
+
+  .responder-name {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
   }
 
   .already-responded {
