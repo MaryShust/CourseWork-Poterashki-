@@ -1,0 +1,35 @@
+@startuml YouTube Component Diagram
+
+
+skinparam linetype ortho
+
+component Frontend
+
+package "Controller Layer" {
+    component Controller
+
+    component DtoMapper
+}
+
+package "Service Layer" {
+
+    component Service
+
+}
+
+package "Repository Layer" {
+    component Repository
+
+    component EntityMapper
+}
+
+Frontend -> "Controller Layer" : HTTP requests
+Controller -> DtoMapper: DTO to Domain
+
+Controller -> "Service Layer": Business logic requests
+
+Service -> "Repository Layer": Data requests
+Repository -> EntityMapper: Entity to Domain
+
+
+@enduml
