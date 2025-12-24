@@ -4,7 +4,6 @@
       <h2>Мои объявления</h2>
       <p v-if="totalItems > 0" class="page-subtitle">
         Всего найдено {{ totalItems }} {{ getAnnouncementsText(totalItems) }}
-        <span v-if="hasResponsesFilter" class="filter-notice">(с откликами)</span>
       </p>
       <p v-else-if="!loading" class="page-subtitle">
         У вас пока нет объявлений
@@ -16,12 +15,7 @@
       :announcements="announcements"
       :loading="loading"
       :showCreateButton="true"
-      :initialFilters="initialFilters"
-      :totalPages="totalPages"
-      :currentPage="currentPage"
       :totalItems="totalItems"
-      @page-changed="handlePageChange"
-      @filters-changed="handleFiltersChange"
     />
   </div>
 </template>
@@ -38,41 +32,18 @@ export default {
     return {
       announcements: [],
       loading: false,
-      initialFilters: {},
-      currentFilters: {},
-      currentPage: 0, // API использует нумерацию с 0
-      pageSize: 12,
-      totalPages: 0,
       totalItems: 0
     }
   },
-  computed: {
-    hasResponsesFilter() {
-      return this.currentFilters.hasResponse === true
-    }
-  },
   created() {
-    this.checkUrlFilters()
     this.loadAnnouncements()
   },
   watch: {
-    '$route.query'(newQuery) {
-      this.checkUrlFilters()
-    },
     currentPage() {
       this.loadAnnouncements()
     }
   },
   methods: {
-    checkUrlFilters() {
-      if (this.$route.query.filter === 'has_response') {
-        this.initialFilters = {
-          hasResponse: true
-        }
-      } else {
-        this.initialFilters = {}
-      }
-    },
 
     async loadAnnouncements() {
       this.loading = true
@@ -85,8 +56,8 @@ export default {
 
         // Строим query параметры
         const queryParams = new URLSearchParams()
-        queryParams.append('page', this.currentPage)
-        queryParams.append('size', this.pageSize)
+        queryParams.append('page', 0)
+        queryParams.append('size', 100)
 
         // Добавляем сортировку по дате создания (новые сначала)
         queryParams.append('sort', 'createdAt,desc')
@@ -108,32 +79,14 @@ export default {
         const data = await response.json()
         console.log('Загружены объявления:', data)
 
-        // Предполагаем, что сервер возвращает структуру с пагинацией
-        // Если сервер возвращает просто массив, адаптируем под него
-        if (Array.isArray(data)) {
-          this.announcements = this.transformAnnouncements(data)
-          this.totalItems = data.length
-          this.totalPages = Math.ceil(data.length / this.pageSize)
-        } else if (data.content) {
-          // Spring Data Page format
-          this.announcements = this.transformAnnouncements(data.content)
-          this.totalItems = data.totalElements
-          this.totalPages = data.totalPages
-          this.currentPage = data.number
-        } else {
-          // Другой формат
-          this.announcements = this.transformAnnouncements(data)
-          this.totalItems = this.announcements.length
-          this.totalPages = Math.ceil(this.announcements.length / this.pageSize)
-        }
-
+        this.announcements = this.transformAnnouncements(data.items)
+        this.totalItems = data.total
         console.log('Объявления загружены:', this.announcements)
       } catch (error) {
         console.error('Ошибка загрузки объявлений:', error)
         this.errorMessage = 'Не удалось загрузить объявления. Пожалуйста, попробуйте позже.'
         this.announcements = []
         this.totalItems = 0
-        this.totalPages = 0
       } finally {
         this.loading = false
       }
@@ -145,10 +98,6 @@ export default {
       return announcements.map(ann => {
         // Извлекаем информацию из описания
         const description = ann.description || ''
-        const title = this.extractTitleFromDescription(description)
-        const color = this.extractColorFromDescription(description)
-        const reward = this.extractRewardFromDescription(description)
-        const category = this.extractCategoryFromDescription(description)
 
         // Определяем, активно ли объявление (если completedAt null или в будущем)
         const isActive = !ann.completedAt || new Date(ann.completedAt) > new Date()
@@ -167,90 +116,19 @@ export default {
           createdAt: ann.createdAt,
           completedAt: ann.completedAt,
           version: ann.version || 0,
-          // Добавляем совместимые поля
-          title: title,
+          title: ann.title,
           city: ann.place?.city || 'Не указан',
           address: ann.place?.street || '',
           lostDate: ann.date,
-          color: color,
-          reward: reward,
-          category: category,
+          fee: ann.fee,
           isActive: isActive,
           isFound: isFound,
-          responseCount: 0, // Пока нет информации об откликах
-          userName: 'Вы', // Для моих объявлений
+          responseCount: 0,
+          userName: 'Вы',
           // Для фильтров
           hasResponse: false
         }
       })
-    },
-
-    extractTitleFromDescription(description) {
-      if (!description) return 'Без названия'
-      const firstSentence = description.split('.')[0]
-      return firstSentence.length > 100 ? firstSentence.substring(0, 100) : firstSentence
-    },
-
-    extractColorFromDescription(description) {
-      if (!description) return ''
-      const colors = ['черный', 'белый', 'красный', 'синий', 'зеленый', 'желтый', 'коричневый', 'серый']
-      for (const color of colors) {
-        if (description.toLowerCase().includes(color)) {
-          return color
-        }
-      }
-      return ''
-    },
-
-    extractRewardFromDescription(description) {
-      if (!description) return 0
-      const rewardMatch = description.match(/(\d+)[\s]*руб/)
-      return rewardMatch ? parseInt(rewardMatch[1]) : 0
-    },
-
-    extractCategoryFromDescription(description) {
-      if (!description) return 'Другое'
-
-      const categories = {
-        'электроник': 'ELECTRONICS',
-        'телефон': 'ELECTRONICS',
-        'ноутбук': 'ELECTRONICS',
-        'документ': 'DOCUMENTS',
-        'паспорт': 'DOCUMENTS',
-        'права': 'DOCUMENTS',
-        'ключ': 'KEYS',
-        'кошелек': 'WALLET',
-        'деньги': 'WALLET',
-        'украшен': 'JEWELRY',
-        'кольцо': 'JEWELRY',
-        'цепочка': 'JEWELRY',
-        'одежд': 'CLOTHES',
-        'куртк': 'CLOTHES',
-        'животн': 'ANIMALS',
-        'кот': 'ANIMALS',
-        'собак': 'ANIMALS',
-        'сумк': 'BAGS',
-        'рюкзак': 'BAGS'
-      }
-
-      const descLower = description.toLowerCase()
-      for (const [keyword, category] of Object.entries(categories)) {
-        if (descLower.includes(keyword)) {
-          return category
-        }
-      }
-
-      return 'Другое'
-    },
-
-    handleFiltersChange(filters) {
-      this.currentFilters = filters
-      this.currentPage = 0 // Сбрасываем на первую страницу при изменении фильтров
-      this.loadAnnouncements()
-    },
-
-    handlePageChange(page) {
-      this.currentPage = page
     },
 
     getAnnouncementsText(count) {

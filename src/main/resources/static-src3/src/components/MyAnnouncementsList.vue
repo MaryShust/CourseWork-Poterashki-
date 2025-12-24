@@ -1,61 +1,9 @@
 <template>
   <div class="announcements-list">
-    <div v-if="showFilters" class="filters">
-      <div class="filter-group toggle-filter">
-        <label class="toggle-label">
-          <input type="checkbox" v-model="filters.hasResponse" @change="applyFilters" class="toggle-input">
-          <span class="toggle-slider"></span>
-          <span class="toggle-text">Есть ответ</span>
-        </label>
-      </div>
-
-      <div class="filter-group">
-        <label>Город:</label>
-        <select v-model="filters.city" @change="applyFilters">
-          <option value="">Все города</option>
-          <option v-for="city in availableCities" :key="city" :value="city">{{ city }}</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label>Статус:</label>
-        <select v-model="filters.status" @change="applyFilters">
-          <option value="all">Все</option>
-          <option value="active">Активные</option>
-          <option value="inactive">Завершенные</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label>Тип:</label>
-        <select v-model="filters.type" @change="applyFilters">
-          <option value="all">Все типы</option>
-          <option value="LOST">Потерял</option>
-          <option value="FOUND">Нашел</option>
-        </select>
-      </div>
-
-      <div class="filter-group">
-        <label>Дата:</label>
-        <select v-model="filters.dateRange" @change="applyFilters">
-          <option value="all">За всё время</option>
-          <option value="today">Сегодня</option>
-          <option value="week">За неделю</option>
-          <option value="month">За месяц</option>
-        </select>
-      </div>
-
-      <button class="btn-clear" @click="clearFilters" v-if="hasActiveFilters">
-        ✕ Сбросить фильтры
-      </button>
-    </div>
 
     <div class="list-stats" v-if="showStats">
       <span>Всего: {{ totalItems }}</span>
       <span>Активных: {{ activeCount }}</span>
-      <span v-if="filters.type === 'LOST'">Потеряно: {{ lostCount }}</span>
-      <span v-if="filters.type === 'FOUND'">Найдено: {{ foundCount }}</span>
-      <span>Страница: {{ currentPage + 1 }} из {{ totalPages }}</span>
     </div>
 
     <div class="announcements-grid">
@@ -67,7 +15,6 @@
       <div v-else-if="announcements.length === 0" class="empty-state">
         <div class="empty-icon">📭</div>
         <p>Объявления не найдены</p>
-        <p class="hint" v-if="hasActiveFilters">Попробуйте изменить параметры фильтров</p>
         <p class="hint" v-else>У вас еще нет созданных объявлений</p>
 
         <button v-if="showCreateButton" class="btn-create" @click="goToCreate">
@@ -123,8 +70,8 @@
               </div>
 
               <div class="card-actions">
-                <button v-if="announcement.reward > 0" class="btn-reward">
-                  💰 {{ formatCurrency(announcement.reward) }}
+                <button v-if="announcement.fee > 0" class="btn-reward">
+                  💰 {{ formatCurrency(announcement.fee) }}
                 </button>
 
                 <button v-if="announcement.isActive" class="btn-edit" @click="editAnnouncement(announcement.id)">
@@ -134,56 +81,10 @@
                 <button class="btn-view" @click="viewDetails(announcement.id)">
                   👁️ Подробнее
                 </button>
-
-                <button v-if="announcement.isActive" class="btn-complete" @click="completeAnnouncement(announcement.id)">
-                  ✅ Завершить
-                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Пагинация -->
-    <div v-if="showPagination && totalPages > 1" class="pagination">
-      <button class="btn-pagination first" @click="goToPage(0)" :disabled="currentPage === 0">
-        « Первая
-      </button>
-
-      <button class="btn-pagination prev" @click="prevPage" :disabled="currentPage === 0">
-        ← Назад
-      </button>
-
-      <div class="page-numbers">
-        <button v-for="page in visiblePages"
-                :key="page"
-                class="page-number"
-                :class="{ active: page === currentPage + 1 }"
-                @click="goToPage(page - 1)">
-          {{ page }}
-        </button>
-
-        <span v-if="hasEllipsis" class="ellipsis">...</span>
-
-        <button v-if="totalPages > 5 && currentPage < totalPages - 2"
-                class="page-number"
-                @click="goToPage(totalPages - 1)">
-          {{ totalPages }}
-        </button>
-      </div>
-
-      <button class="btn-pagination next" @click="nextPage" :disabled="currentPage === totalPages - 1">
-        Вперед →
-      </button>
-
-      <button class="btn-pagination last" @click="goToPage(totalPages - 1)" :disabled="currentPage === totalPages - 1">
-        Последняя »
-      </button>
-
-      <div class="page-info">
-        <span>Страница {{ currentPage + 1 }} из {{ totalPages }}</span>
-        <span>Всего: {{ totalItems }}</span>
       </div>
     </div>
   </div>
@@ -201,10 +102,6 @@ export default {
       type: Boolean,
       default: false
     },
-    showFilters: {
-      type: Boolean,
-      default: true
-    },
     showStats: {
       type: Boolean,
       default: true
@@ -213,73 +110,22 @@ export default {
       type: Boolean,
       default: false
     },
-    showPagination: {
-      type: Boolean,
-      default: true
-    },
-    totalPages: {
-      type: Number,
-      default: 0
-    },
-    currentPage: {
-      type: Number,
-      default: 0
-    },
     totalItems: {
       type: Number,
       default: 0
-    },
-    initialFilters: {
-      type: Object,
-      default: () => ({})
-    }
-  },
-  data() {
-    return {
-      filters: {
-        city: '',
-        category: '',
-        status: 'all',
-        type: 'all',
-        dateRange: 'all',
-        hasResponse: false
-      }
     }
   },
   computed: {
     availableCities() {
       const cities = new Set()
       this.announcements.forEach(item => {
+        console.log("items")
+        console.log(item)
         if (item.city && item.city !== 'Не указан') {
           cities.add(item.city)
         }
       })
       return Array.from(cities).sort()
-    },
-
-    categoryLabels() {
-      const categories = [
-        { value: '', label: 'Все категории' },
-        { value: 'ELECTRONICS', label: 'Электроника' },
-        { value: 'DOCUMENTS', label: 'Документы' },
-        { value: 'KEYS', label: 'Ключи' },
-        { value: 'WALLET', label: 'Кошелек/Деньги' },
-        { value: 'JEWELRY', label: 'Украшения' },
-        { value: 'CLOTHES', label: 'Одежда' },
-        { value: 'ANIMALS', label: 'Животные' },
-        { value: 'BAGS', label: 'Сумки/Рюкзаки' },
-        { value: 'OTHER', label: 'Другое' }
-      ]
-
-      // Фильтруем только те категории, которые есть в объявлениях
-      const usedCategories = new Set(this.announcements.map(item => item.category))
-      return categories.filter(cat => !cat.value || usedCategories.has(cat.value))
-    },
-
-    hasActiveFilters() {
-      return Object.values(this.filters).some(value =>
-        (value !== 'all' && value !== '' && value !== false)
-      )
     },
 
     activeCount() {
@@ -292,53 +138,6 @@ export default {
 
     foundCount() {
       return this.announcements.filter(item => item.type === 'FOUND').length
-    },
-
-    // Вычисляем видимые номера страниц
-    visiblePages() {
-      const pages = []
-      const maxVisible = 5
-
-      if (this.totalPages <= maxVisible) {
-        for (let i = 1; i <= this.totalPages; i++) {
-          pages.push(i)
-        }
-      } else {
-        let start = Math.max(1, this.currentPage + 1 - 2)
-        let end = Math.min(this.totalPages, start + maxVisible - 1)
-
-        if (end - start + 1 < maxVisible) {
-          start = Math.max(1, end - maxVisible + 1)
-        }
-
-        for (let i = start; i <= end; i++) {
-          pages.push(i)
-        }
-      }
-
-      return pages
-    },
-
-    hasEllipsis() {
-      return this.totalPages > 5 && this.currentPage + 1 < this.totalPages - 2
-    }
-  },
-  watch: {
-    initialFilters: {
-      immediate: true,
-      handler(newFilters) {
-        if (newFilters && Object.keys(newFilters).length > 0) {
-          this.filters = { ...this.filters, ...newFilters }
-          this.applyFilters()
-        }
-      }
-    },
-
-    filters: {
-      handler() {
-        this.$emit('filters-changed', this.filters)
-      },
-      deep: true
     }
   },
   methods: {
@@ -368,75 +167,18 @@ export default {
       event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlZWVlZWUiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+PGZvbnQgc2l6ZT0iMTQiPlBob3RvPC9mb250PjwvdGV4dD48L3N2Zz4='
     },
 
-    applyFilters() {
-      this.$emit('filters-changed', this.filters)
-    },
-
-    clearFilters() {
-      this.filters = {
-        city: '',
-        category: '',
-        status: 'all',
-        type: 'all',
-        dateRange: 'all',
-        hasResponse: false
-      }
-      this.$emit('filters-cleared')
-    },
-
-    goToPage(page) {
-      this.$emit('page-changed', page)
-    },
-
-    prevPage() {
-      if (this.currentPage > 0) {
-        this.$emit('page-changed', this.currentPage - 1)
-      }
-    },
-
-    nextPage() {
-      if (this.currentPage < this.totalPages - 1) {
-        this.$emit('page-changed', this.currentPage + 1)
-      }
-    },
-
     viewDetails(id) {
+      localStorage.setItem('isMyDetails', true)
       this.$router.push({
-        name: 'ThingDetails',
-        params: { id }
+        path: '/details',
+        query: {
+          id: id
+        }
       })
     },
 
     editAnnouncement(id) {
       this.$router.push(`/edit/${id}`)
-    },
-
-    async completeAnnouncement(id) {
-      if (confirm('Вы уверены, что хотите завершить это объявление?')) {
-        try {
-          const userId = localStorage.getItem('currentUserId')
-          const response = await fetch(`/api/thing/${id}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': userId
-            },
-            body: JSON.stringify({
-              completedAt: new Date().toISOString()
-            })
-          })
-
-          if (response.ok) {
-            alert('Объявление завершено!')
-            this.$emit('announcement-completed', id)
-          } else {
-            throw new Error('Ошибка завершения объявления')
-          }
-        } catch (error) {
-          console.error('Ошибка:', error)
-          alert('Не удалось завершить объявление')
-        }
-      }
     },
 
     goToCreate() {
@@ -482,44 +224,6 @@ export default {
 <style scoped>
 .announcements-list {
   padding: 1rem;
-}
-
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: #f8f9fa;
-  border-radius: 10px;
-  border: 1px solid #e9ecef;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-}
-
-.filter-group label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #333;
-  font-size: 0.9rem;
-}
-
-.filter-group select {
-  padding: 0.5rem;
-  border: 2px solid #e9ecef;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  background: white;
-  cursor: pointer;
-}
-
-.filter-group select:focus {
-  outline: none;
-  border-color: #8B5CF6;
 }
 
 .toggle-filter {
@@ -992,10 +696,6 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .filters {
-    flex-direction: column;
-    gap: 1rem;
-  }
 
   .filter-group {
     min-width: 100%;
