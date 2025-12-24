@@ -136,6 +136,7 @@ class DefaultControllerDelegateImpl(
 
         val pageable = createPageable(page, size, sort)
         val page = thingFinder.find(
+            title = thingGetDto.title,
             userId = user.id,
             type = thingGetDto.type?.toDomain(),
             date = thingGetDto.date?.toInstant(),

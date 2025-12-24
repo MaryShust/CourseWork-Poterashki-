@@ -13,6 +13,8 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
@@ -70,11 +72,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    volumes:
+      - miniodata:/data
     networks:
       - app-network
 
 volumes:
   esdata:
+  pgdata:
+  miniodata:
+
 
 networks:
   app-network:

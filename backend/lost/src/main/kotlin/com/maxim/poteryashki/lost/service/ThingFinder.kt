@@ -20,6 +20,7 @@ class ThingFinder(
 
     fun find(
         userId: UUID, // Тот от кого пришел запрос
+        title: String?,
         type: ThingType?,
         date: Instant?,
         place: Place,
@@ -28,6 +29,7 @@ class ThingFinder(
         pageable: Pageable,
     ): Page {
         val page = thingDao.findAllBy(
+            title = title,
             type = type,
             date = date,
             place = place,

@@ -14,16 +14,18 @@ class ThingDao(
 ) {
 
     fun findAllBy(
+        title: String?,
         type: ThingType?,
         date: Instant?,
         place: Place,
         description: String?,
         completed: Boolean?,
         pageable: Pageable,
-        owner: UUID
+        owner: UUID,
     ): Page {
         val (hints, total) = thingRepository.findAllBy(
             ThingFilter(
+                title = title,
                 type = type?.toEntity(),
                 date = date,
                 place = place.toEntity(),

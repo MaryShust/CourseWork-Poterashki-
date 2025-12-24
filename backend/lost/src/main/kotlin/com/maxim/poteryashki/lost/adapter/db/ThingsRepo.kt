@@ -18,6 +18,7 @@ import java.time.Instant
 import java.util.UUID
 
 data class ThingFilter(
+    val title: String? = null,
     val type: ThingType? = null,
     val date: Instant? = null,
     val place: Place? = null,
@@ -64,6 +65,14 @@ class ThingRepositoryImpl(
             )
         }
 
+        val titleQuery = queryIfNotNull(filter.title) { text ->
+            Q.match {
+                it.field("title")
+                    .query(text)
+                    .operator(Operator.And)
+            }
+        }
+
         val dateQuery = dateQuery(filter.date)
 
         val completedQuery = completedQuery(filter.completed)
@@ -88,6 +97,7 @@ class ThingRepositoryImpl(
         val mustQuery = listOfNotNull(
             dateQuery,
             descriptionQuery,
+            titleQuery
         ) + placeQuery
 
         val esQuery = buildQuery(filterQuery, mustQuery)

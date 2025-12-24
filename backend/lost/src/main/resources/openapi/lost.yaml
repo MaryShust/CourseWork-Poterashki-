@@ -401,6 +401,10 @@ components:
           type: boolean
           description: Статус завершенности
           example: false
+        title:
+          type: string
+          description: Название вещи
+          example: "Черный рюкзак"
 
     ThingDto:
       type: object
