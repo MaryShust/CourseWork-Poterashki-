@@ -1,0 +1,29 @@
+@startuml YouTube Component Diagram
+
+
+skinparam linetype ortho
+
+component Frontend
+
+node "Backend" {
+    component Lost as Lost
+
+    package "Auth Module"{
+       component TokenService as TokenService
+       component StatisticsService as StatisticsService
+    }
+
+    component "Spring MVC" as Static
+}
+
+Frontend -> Backend : HTTP requests
+
+Frontend -> Static: static content
+Backend -> "Auth Module": User data requests
+Backend -> Lost: Lost things requests
+
+
+Lost -> TokenService: User authorization
+Lost -> StatisticsService: User statistics updates
+
+@enduml

@@ -1,0 +1,134 @@
+package com.maxim.poteryashki.lost.controller
+
+import com.maxim.poteryashki.auth.domain.User
+import com.maxim.poteryashki.lost.domain.Place
+import com.maxim.poteryashki.lost.domain.Thing
+import com.maxim.poteryashki.lost.domain.ThingType
+import com.maxim.poteryashki.lost.dto.PlaceDto
+import com.maxim.poteryashki.lost.dto.ShortenedUserProfile
+import com.maxim.poteryashki.lost.dto.ThingDto
+import com.maxim.poteryashki.lost.dto.ThingSearchDto
+import com.maxim.poteryashki.lost.dto.ThingTypeDto
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
+import java.net.URI
+import java.time.Instant
+import java.time.ZoneOffset
+import java.util.UUID
+
+fun createPageable(
+    page: Int = 0,
+    size: Int = 20,
+    sort: List<String>? = null
+): Pageable {
+
+    if (sort.isNullOrEmpty() || sort.all { it.isBlank() } || sort.size != 2) {
+        return PageRequest.of(page, size)
+    }
+
+    val field = sort[0]
+    val order = sort[1]
+
+    val direction = Sort.Direction.fromString(order)
+
+    val sorts = Sort.by(direction, field)
+
+    return PageRequest.of(page, size, sorts)
+}
+
+
+fun ThingDto.toSearchDto(userResponded: Boolean) =
+    ThingSearchDto(
+        id = this.id,
+        type = this.type,
+        date = this.date,
+        place = this.place,
+        description = this.description,
+        owner = this.owner,
+        title = this.title,
+        photos = this.photos,
+        createdAt = this.createdAt,
+        fee = this.fee,
+        responses = this.responses,
+        completedAt = this.completedAt,
+        version = this.version,
+        alreadyResponded = userResponded
+    )
+
+fun ThingTypeDto.toDomain() =
+    when(this) {
+        ThingTypeDto.LOST -> ThingType.LOST
+        ThingTypeDto.FOUND -> ThingType.FOUND
+    }
+
+fun ThingType.toDto() =
+    when(this) {
+        ThingType.LOST -> ThingTypeDto.LOST
+        ThingType.FOUND -> ThingTypeDto.FOUND
+    }
+
+fun PlaceDto.toDomain() =
+    Place(
+        city = this.city,
+        street = this.street,
+        house = this.house,
+        placeName = this.placeName,
+        extraDescription = this.extraDescription,
+    )
+
+fun Place.toDto() =
+    PlaceDto(
+        city = this.city,
+        street = this.street,
+        house = this.house,
+        placeName = this.placeName,
+        extraDescription = this.extraDescription,
+    )
+
+fun User.toShortenedProfile() =
+    ShortenedUserProfile(
+        email = this.email,
+        phone = this.metadata?.phone,
+        username = this.name
+    )
+
+
+fun Thing.toDto(profiles: List<ShortenedUserProfile>) =
+    ThingDto(
+        id = this.id,
+        description = this.description,
+        type = this.type.toDto(),
+        place = this.place.toDto(),
+        owner = this.owner,
+        date = this.date.toOffsetDateTime(),
+        photos = this.photos.map { it.toUri() },
+        fee = this.fee,
+        responses = profiles,
+        createdAt = this.createdAt.toOffsetDateTime(),
+        completedAt = this.completedAt?.toOffsetDateTime(),
+        title = title,
+        version = this.version,
+    )
+
+fun ThingDto.toDomain(id: String, owner: UUID) =
+    Thing(
+        id = id,
+        owner = owner,
+        type = this.type.toDomain(),
+        createdAt = createdAt?.toInstant() ?: Instant.now(),
+        date = date.toInstant(),
+        place = place.toDomain(),
+        description = description,
+        photos = photos.map { it.toString() },
+        completedAt = completedAt?.toInstant(),
+        title = title,
+        responses = null,
+        fee = fee,
+        version = version,
+    )
+
+fun Instant.toOffsetDateTime() =
+    this.atOffset(ZoneOffset.UTC)
+
+fun String.toUri() = URI.create(this)

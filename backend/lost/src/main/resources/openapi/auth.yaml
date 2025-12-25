@@ -1,0 +1,324 @@
+openapi: 3.0.3
+info:
+  title: publicorization API
+  description: API для аутентификации и регистрации пользователей
+  version: 1.0.0
+  contact:
+    name: Support Team
+    email: support@example.com
+    
+tags:
+  - auth
+  - profile
+
+servers:
+  - url: http://localhost:8080/api/public
+    description: Local server
+
+paths:
+  /login:
+    post:
+      summary: Аутентификация пользователя
+      description: Возвращает токен и userId при успешном входе
+      operationId: login
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTokenResponse'
+        '401':
+          description: Неверный email или пароль
+
+  /register:
+    post:
+      summary: Регистрация нового пользователя
+      description: Создаёт нового пользователя и возвращает токен
+      operationId: register
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: Пользователь успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTokenResponse'
+  /my-profile:
+    get:
+      summary: Получение информации о пользователе
+      description: Возвращает информацию о пользователе по токену
+      operationId: getProfile
+      tags:
+        - profile
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetProfileResponse'
+        '401':
+          description: Пользователь не авторизован
+    post:
+      summary: Обновление информации о пользователе
+      description: Обновляет информацию о пользователе по токену
+      operationId: updateProfile
+      tags:
+        - profile
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Profile'
+      responses:
+        '200':
+          description: Успешное обновление
+        '401':
+          description: Пользователь не авторизован
+
+  /my-statistics:
+    get:
+      summary: Получение статистики пользователя
+      description: Возвращает статистику пользователя по токену
+      operationId: getStatistics
+      tags:
+        - profile
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Статистика найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStatisticsResponse'
+        '401':
+          description: Пользователь не авторизован
+
+
+
+  /user/{id}/profile:
+    get:
+      summary: Получение информации о пользователе
+      description: Возвращает информацию о пользователе по токену
+      operationId: getProfileForUser
+      tags:
+        - profile
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+          required: true
+          description: Токен пользователя
+      responses:
+        '200':
+          description: Профиль успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetProfileResponse'
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Пользователь не найден
+
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+          description: Email пользователя
+        password:
+          type: string
+          format: password
+          example: secret123
+          description: Пароль пользователя
+      example:
+        email: user@example.com
+        password: secret123
+
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          example: user123
+          description: Имя пользователя
+        email:
+          type: string
+          format: email
+          example: user@example.com
+          description: Email пользователя
+        password:
+          type: string
+          format: password
+          example: secret123
+          description: Пароль (минимум 6 символов)
+      example:
+        username: user123
+        email: user@example.com
+        password: secret123
+
+    GetTokenResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          example: user123
+          description: Имя пользователя
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxx"
+          description: Токен авторизации
+      required:
+        - username
+        - token
+
+    TokenRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxx"
+          description: Токен
+      required:
+        - token
+
+    UserIdResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"
+          description: Идентификатор пользователя из токена
+      required:
+        - userId
+    Profile:
+      type: object
+      required:
+        - name
+        - email
+        - phone
+        - city
+      properties:
+        name:
+          type: string
+          example: "John Doe"
+          description: Имя пользователя
+        phone:
+          type: string
+          example: "+1234567890"
+          description: Номер телефона пользователя
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+          description: Email пользователя
+        city:
+          type: string
+          example: "123 Main St, Anytown, USA"
+          description: Адрес пользователя
+    GetStatisticsResponse:
+      type: object
+      required:
+        - active
+        - foundTotal
+        - totalFee
+        - maxFee
+      properties:
+        active:
+          type: integer
+          example: 10
+          description: Количество активных объявлений
+        foundTotal:
+          type: integer
+          example: 20
+          description: Общее количество найденных объявлений
+        totalFee:
+          type: integer
+          example: 20
+        maxFee:
+          type: integer
+          example: 20
+    GetProfileResponse:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "John Doe"
+          description: Имя пользователя
+        phone:
+          type: string
+          example: "+1234567890"
+          description: Номер телефона пользователя
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+          description: Email пользователя
+        city:
+          type: string
+          example: "123 Main St, Anytown, USA"
+          description: Адрес пользователя
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00Z"
+          description: Дата создания профиля

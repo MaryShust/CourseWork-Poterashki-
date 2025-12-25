@@ -1,0 +1,72 @@
+package com.maxim.poteryashki.lost.adapter.db
+
+import java.util.UUID
+import com.maxim.poteryashki.lost.domain.ThingType as ThingTypeDomain
+import com.maxim.poteryashki.lost.domain.Place as PlaceDomain
+import com.maxim.poteryashki.lost.domain.Thing as ThingDomain
+
+
+fun ThingDomain.toEntity(): ThingEntity =
+    ThingEntity(
+        id = id,
+        title = title,
+        owner = owner.toString(),
+        type = type.toEntity(),
+        createdAt = createdAt,
+        date = date,
+        place = place.toEntity(),
+        description = description,
+        photos = photos,
+        completedAt = completedAt,
+        responses = responses?.toList(),
+        fee = fee,
+        version = version
+    )
+
+fun PlaceDomain.toEntity(): Place =
+    Place(
+        city = city,
+        street = street,
+        house = house,
+        placeName = placeName,
+        extraDescription = extraDescription
+    )
+
+fun ThingTypeDomain.toEntity(): ThingType =
+    when (this) {
+        ThingTypeDomain.LOST -> ThingType.LOST
+        ThingTypeDomain.FOUND -> ThingType.FOUND
+    }
+
+fun ThingEntity.toDomain(): ThingDomain =
+    ThingDomain(
+        id = id,
+        title = title,
+        owner = UUID.fromString(owner),
+        type = type.toDomain(),
+        createdAt = createdAt,
+        date = date,
+        place = place.toDomain(),
+        description = description,
+        photos = photos,
+        completedAt = completedAt,
+        responses = responses?.toSet(),
+        fee = fee,
+        version = version
+    )
+
+fun Place.toDomain(): PlaceDomain =
+    PlaceDomain(
+        city = city,
+        street = street,
+        house = house,
+        placeName = placeName,
+        extraDescription = extraDescription
+    )
+
+fun ThingType.toDomain(): ThingTypeDomain =
+    when (this) {
+        ThingType.LOST -> ThingTypeDomain.LOST
+        ThingType.FOUND -> ThingTypeDomain.FOUND
+    }
+

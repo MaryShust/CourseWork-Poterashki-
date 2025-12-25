@@ -1,0 +1,70 @@
+@startuml YouTube Component Diagram
+
+skinparam linetype ortho
+
+component Frontend
+
+component "Lost Service" as LostService
+
+package "Auth Service" as Auth {
+
+    package "Controller Layer" as Controller {
+        component "Profile Controller" as ProfileController
+
+        component "Authorization Controller" as AuthController
+    }
+
+    package "Service Layer" as Service {
+        component "Statistics Service" as StatisticsService
+
+        component "Token Service" as TokenService
+
+        component "User Registry" as UserRegistry
+    }
+
+    package "Adapter Layer" {
+        component "Token Dao" as TokenDao
+
+        component "Statistics Dao" as StatisticsDao
+
+        component "User Dao" as UserDao
+    }
+
+    package "DB layer" {
+       component "Statistics Repository" as StatisticsRepository
+
+       component "Token Repository" as TokenRepository
+
+       component "User Repository" as UserRepository
+    }
+
+
+    database "Postgres" as Postgres {
+    }
+}
+
+Frontend -> ProfileController: HTTP requests (get/update profile or statistics)
+Frontend -> AuthController: HTTP requests (login/register)
+
+ProfileController -> UserRegistry: get/update profile
+ProfileController -> StatisticsService: get statistics
+
+LostService -> StatisticsService: update statistics
+LostService -> TokenService: get user by token/id
+
+AuthController -> UserRegistry: find user by params
+AuthController -> TokenService: generate token
+
+StatisticsService -> StatisticsDao: get/save statistics
+TokenService -> TokenDao: get/save token
+UserRegistry -> UserDao: get/save user
+
+StatisticsDao -> StatisticsRepository: get/save statistics
+TokenDao -> TokenRepository: get/save token
+UserDao -> UserRepository: get/save user
+
+StatisticsRepository -> Postgres: get/save statistics
+TokenRepository -> Postgres: get/save token
+UserRepository -> Postgres: get/save user
+
+@enduml

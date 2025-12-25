@@ -1,0 +1,52 @@
+@startuml YouTube Component Diagram
+
+skinparam linetype ortho
+
+component Frontend
+
+package "Lost Service" as Lost {
+    component "DefaultController" as DefaultController
+
+    package "Service Layer" as ServiceLayer {
+       component "Thing Finder" as ThingFinder
+
+       component "Thing Merge Service" as ThingMergeService
+
+       component "Thing Registry" as ThingRegistry
+    }
+
+    package "Adapter Layer" {
+        component "Thing Dao" as ThingDao
+
+        component "S3 Adapter" as S3Adapter
+    }
+
+    package "DB layer" {
+       component "Thing Repository" as ThingRepository
+
+       component "Minio Client" as MinioClient
+    }
+
+    database "Elasticsearch" as Elasticsearch {
+    }
+    database "S3 Minio" as Minio {
+    }
+}
+
+Frontend -> DefaultController: HTTP requests
+
+DefaultController -> ThingFinder: get thing or things batch
+DefaultController -> ThingRegistry: create or update thing
+
+ThingFinder -> ThingDao: get thing or things batch
+ThingRegistry -> ThingDao: create or update thing
+ThingRegistry -> ThingMergeService: thing merge requests
+ThingRegistry -> S3Adapter: upload photo/get photo link
+
+ThingDao -> ThingRepository: get thing or things batch or create/update ThingEntity
+S3Adapter -> MinioClient: upload photo/get photo link
+
+ThingRepository -> Elasticsearch: Entities access requests
+MinioClient -> Minio: Images access requests
+
+@enduml
