@@ -1,0 +1,5 @@
+CREATE TABLE user (
+    id UUID PRIMARY KEY,
+    username VARCHAR(50) NOT NULL ,
+    data JSONB DEFAULT NULL
+)
